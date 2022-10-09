@@ -52,24 +52,29 @@ if __name__ == '__main__':
 
             weights = get_random_weights(x_all.shape[0])
             y = None
+            epoche_count = 0
             for i in range(epoce_numb):
+                epoche_count += 1
                 c = cost(weights, x_train.T)
                 y = estimate(c, lambda v: estimate_func(0, v))
                 dw = delta_w(d_all[:train_size], y, x_train)
                 weights = calculate_new_weight(weights, alfa, dw)
+                if 1.0 - np.mean(d_all[:train_size] == y) < 0.01:
+                    break
 
             c = cost(weights, x_test.T)
             y = estimate(c, lambda v: estimate_func(0, v))
             diff = np.mean(d_all[train_size:] == y) * 100
 
-            print(f'{experiment_case[1]}\t{func_type[1]}\t{epoce_numb}\t{diff}%')
+            print(f'{experiment_case[1]}\t{func_type[1]}\t{epoche_count}\t{diff}%')
 
-            plt.title(f'{experiment_case[1]} - {func_type[1]} - {epoce_numb} - {diff}%')
-            plt.plot(x_test[1, :], x_test[2, :], marker=".", linestyle='None')
+            plt.title(f'{experiment_case[1]} - {func_type[1]} - {epoche_count} - {diff}%')
+            plt.scatter(x_test[1, :], x_test[2, :])
 
-            x_all = np.linspace(-1, 1.5, 10)
+            x_all = np.linspace(-1.5 if estimate_func == bipolar else -0.5, 1.5, 10)
             y = (-weights[1] * x_all - weights[0]) / weights[2]
             plt.plot(x_all, y)
             plt.axhline(y=0, color="k")
             plt.axvline(x=0, color="k")
+            plt.grid(True)
             plt.show()
