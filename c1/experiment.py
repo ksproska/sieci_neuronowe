@@ -41,10 +41,11 @@ if __name__ == '__main__':
             alfa = 0.1
             epoce_numb = 100
 
+            d_case = experiment_case[0]
             estimate_func = func_type[0]
             x_original = x_originals[estimate_func]
             x_all = randomize(merge_multiple_times(x_original, repetitions))
-            d_all = merge_multiple_times(experiment_case[0][estimate_func], repetitions)
+            d_all = merge_multiple_times(d_case[estimate_func], repetitions)
 
             train_size = int(x_all.shape[1] - x_all.shape[1] * test_percent)
             x_train, x_test = x_all[:, :train_size], x_all[:, train_size:]
@@ -69,4 +70,6 @@ if __name__ == '__main__':
             x_all = np.linspace(-1, 1.5, 10)
             y = (-weights[1] * x_all - weights[0]) / weights[2]
             plt.plot(x_all, y)
+            plt.axhline(y=0, color="k")
+            plt.axvline(x=0, color="k")
             plt.show()
