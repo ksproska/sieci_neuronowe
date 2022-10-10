@@ -12,9 +12,9 @@ x_original = np.array(
         [0, 1, 0, 1]
     ]
 )
-d_and = np.array([0, 0, 0, 1])
-d_or = np.array([0, 1, 1, 1])
-d_xor = np.array([0, 1, 1, 0])
+d_and = np.array([-1, -1, -1, 1])
+d_or = np.array([-1, 1, 1, 1])
+d_xor = np.array([-1, 1, 1, -1])
 
 
 def main():
@@ -36,30 +36,18 @@ def main():
     weights = get_random_weights(x_all.shape[0]).reshape((x_all.shape[0], 1))
     d_train, d_test = d_all[:train_size], d_all[train_size:]
 
-    # print(x_train[:, :4])
-    # print(d_train.shape)
-    # print(d_train[:4])
-
     for epoch in range(epoch_numb):
         for i in range(x_train.shape[1]):
             z = weights.T @ x_train[:, i].reshape(3, 1)
-            # print(x_train[:, i].reshape(1, 3))
             delta_root = d_train[i] - z
             weights = weights + (alfa * delta_root * x_train[:, i].reshape(3, 1))
-        # print(weights)
-        # current_plt.plot_line(0.0, 1.0, lambda x_vals: (-weights[1] * x_vals - weights[0]) / weights[2])
 
-    # print(weights / weights[0])
     z = count_cost(weights, x_test.T)
-    print(weights)
-    # print(z)
-    matching_percent = np.mean(d_test == z.round()) * 100
-    print(pd.DataFrame({"d_test": d_test.flatten(), "z": z.round().flatten()}).tail(20))
+    matching_percent = np.mean(d_test == apply_func(z, sign_bipolar)).round() * 100
+    # print(pd.DataFrame({"d_test": d_test.flatten(), "z": z.round().flatten()}).tail(20))
 
     # plot all data and show
     plt.title(f'AND - epochs: {epoch_numb} - alfa: {alfa} - match: {matching_percent}%')
-    # plt.scatter(x_train[1, :], x_train[2, :], c=d_train)
-    # plt.show()
     plt.scatter(x_test[1, :], x_test[2, :], c=d_test)
     current_plt.plot_line(0.0, 1.0, lambda x_vals: (-weights[1] * x_vals - weights[0]) / weights[2])
     plt.show()
