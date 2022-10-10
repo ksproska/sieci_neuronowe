@@ -2,6 +2,8 @@ from usefull import randomize, reproduce_x_times, get_random_weights, count_cost
     get_random_except_first_row, MyCustomPlot
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+
 
 x_original = np.array(
     [
@@ -47,13 +49,18 @@ def main():
         # print(weights)
         # current_plt.plot_line(0.0, 1.0, lambda x_vals: (-weights[1] * x_vals - weights[0]) / weights[2])
 
-    print(weights / weights[0])
+    # print(weights / weights[0])
     z = count_cost(weights, x_test.T)
-    matching_percent = np.mean(d_test == apply_func(z, np.sign)) * 100
+    print(weights)
+    # print(z)
+    matching_percent = np.mean(d_test == z.round()) * 100
+    print(pd.DataFrame({"d_test": d_test.flatten(), "z": z.round().flatten()}).tail(20))
 
     # plot all data and show
     plt.title(f'AND - epochs: {epoch_numb} - alfa: {alfa} - match: {matching_percent}%')
-    current_plt.scatter(x_test[1, :], x_test[2, :])
+    # plt.scatter(x_train[1, :], x_train[2, :], c=d_train)
+    # plt.show()
+    plt.scatter(x_test[1, :], x_test[2, :], c=d_test)
     current_plt.plot_line(0.0, 1.0, lambda x_vals: (-weights[1] * x_vals - weights[0]) / weights[2])
     plt.show()
 

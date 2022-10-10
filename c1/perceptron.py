@@ -77,7 +77,7 @@ def main():
 
             current_plt.set_plot(axis[plt_x, plt_y])
             current_plt.set_title(f'{input_case} - {input_func} - epochs: {epoch_count} - alfa: {alfa} - {matching_percent}%')
-            current_plt.scatter(x_test[1, :], x_test[2, :])
+            current_plt.scatter(x_test[1, :], x_test[2, :], d_test)
             current_plt.plot_line(0.0, 1.0, lambda x_vals: (-weights[1] * x_vals - weights[0]) / weights[2])
     plt.show()
 

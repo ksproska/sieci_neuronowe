@@ -10,8 +10,8 @@ class MyCustomPlot:
         self.plot_current.axvline(x=0, color="k")
         self.plot_current.grid(True)
 
-    def scatter(self, xs, ys):
-        self.plot_current.scatter(xs, ys)
+    def scatter(self, xs, ys, groups):
+        self.plot_current.scatter(xs, ys, c=groups)
 
     def plot_line(self, start, end, y_func):
         x_vals = np.linspace(start, end, 10)
