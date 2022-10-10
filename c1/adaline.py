@@ -18,7 +18,7 @@ d_xor = np.array([0, 1, 1, 0])
 def main():
     current_plt = MyCustomPlot()
     current_plt.set_plot(plt)
-    repetitions = 25
+    repetitions = 100
     test_percent = 0.25
     alfa = 0.001
     epoch_numb = 1000
@@ -34,14 +34,22 @@ def main():
     weights = get_random_weights(x_all.shape[0]).reshape((x_all.shape[0], 1))
     d_train, d_test = d_all[:train_size], d_all[train_size:]
 
-    for i in range(epoch_numb):
-        cost = x_train.T @ weights
-        dw = x_train @ (d_train - cost)
-        weights = weights + alfa * dw
+    # print(x_train[:, :4])
+    # print(d_train.shape)
+    # print(d_train[:4])
+
+    for epoch in range(epoch_numb):
+        for i in range(x_train.shape[1]):
+            z = weights.T @ x_train[:, i].reshape(3, 1)
+            # print(x_train[:, i].reshape(1, 3))
+            delta_root = d_train[i] - z
+            weights = weights + (alfa * delta_root * x_train[:, i].reshape(3, 1))
+        # print(weights)
         # current_plt.plot_line(0.0, 1.0, lambda x_vals: (-weights[1] * x_vals - weights[0]) / weights[2])
-    
-    cost = count_cost(weights, x_test.T)
-    matching_percent = np.mean(d_test == apply_func(cost, sign_bipolar)) * 100
+
+    print(weights / weights[0])
+    z = count_cost(weights, x_test.T)
+    matching_percent = np.mean(d_test == apply_func(z, np.sign)) * 100
 
     # plot all data and show
     plt.title(f'AND - epochs: {epoch_numb} - alfa: {alfa} - match: {matching_percent}%')
