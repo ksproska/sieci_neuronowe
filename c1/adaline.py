@@ -1,4 +1,4 @@
-from usefull import *
+from usefull import randomize, merge_multiple_times, get_random_weights, count_cost, apply_func, sign_bipolar
 import numpy as np
 import matplotlib.pyplot as plt
 
