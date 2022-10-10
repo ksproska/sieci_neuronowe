@@ -3,6 +3,25 @@ import numpy as np
 import random
 
 
+class MyCustomPlot:
+    def set_plot(self, plot_current):
+        self.plot_current = plot_current
+        self.plot_current.axhline(y=0, color="k")
+        self.plot_current.axvline(x=0, color="k")
+        self.plot_current.grid(True)
+
+    def scatter(self, xs, ys):
+        self.plot_current.scatter(xs, ys)
+
+    def plot_line(self, start, end, y_func):
+        x_vals = np.linspace(start, end, 10)
+        self.plot_current.plot(x_vals, y_func(x_vals))
+
+    def set_title(self, title):
+        self.plot_current.set_title(title)
+
+
+
 def delta_w(d, y, x):
     diff = d - y
     delt = diff @ x.T
@@ -27,7 +46,7 @@ def sign_bipolar(x):
     return 1
 
 
-def merge_multiple_times(input, num_to_merge):
+def reproduce_x_times(input, num_to_merge):
     output = input.T
     for i in range(num_to_merge - 1):
         output = np.concatenate((output, input.T))
@@ -38,6 +57,12 @@ def randomize(input):
     rand_matrix = np.random.rand(input.shape[0], input.shape[1]) / 10 - 0.05
     rand_matrix[0, :] = 0
     return input + rand_matrix
+
+
+def get_random_except_first_row(shape):
+    rand_matrix = np.random.rand(shape[0], shape[1]) / 10 - 0.05
+    rand_matrix[0, :] = 0
+    return rand_matrix
 
 
 def count_cost(weights, xs):
@@ -64,10 +89,10 @@ def calculate_new_weight(old, alfa, delta_weight):
 
 class TestStringMethods(unittest.TestCase):
     def test_merge_multiple_times(self):
-        output = merge_multiple_times(np.array([[0, 1, 0], [0, 0, 1]]), 2)
+        output = reproduce_x_times(np.array([[0, 1, 0], [0, 0, 1]]), 2)
         np.testing.assert_equal(output, np.array([[0, 1, 0, 0, 1, 0], [0, 0, 1, 0, 0, 1]]))
 
-        output = merge_multiple_times(np.array([[0, 1, 0], [0, 0, 1]]), 3)
+        output = reproduce_x_times(np.array([[0, 1, 0], [0, 0, 1]]), 3)
         np.testing.assert_equal(output, np.array([[0, 1, 0, 0, 1, 0, 0, 1, 0], [0, 0, 1, 0, 0, 1, 0, 0, 1]]))
 
     def test_count_new_weight(self):
