@@ -37,7 +37,7 @@ func_types = {
 
 
 def main():
-    current_plt = MyCustomPlot()
+    current_plt = CurrentPlot()
     repetitions = 200
     test_percent = 0.25
 

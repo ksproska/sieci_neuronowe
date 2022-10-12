@@ -1,10 +1,46 @@
 import unittest
+from math import sqrt
+
 import numpy as np
 import random
+import matplotlib.pyplot as plt
+
+def get_dimensions(n):
+    tempSqrt = sqrt(n)
+    divisors = []
+    currentDiv = 1
+    for currentDiv in range(n):
+        if n % float(currentDiv + 1) == 0:
+            divisors.append(currentDiv + 1)
+    # print divisors this is to ensure that we're choosing well
+    hIndex = min(range(len(divisors)), key=lambda i: abs(divisors[i] - sqrt(n)))
+
+    if divisors[hIndex] * divisors[hIndex] == n:
+        return divisors[hIndex], divisors[hIndex]
+    else:
+        wIndex = hIndex + 1
+        return divisors[hIndex], divisors[wIndex]
 
 
-class MyCustomPlot:
-    def set_plot(self, plot_current):
+# from perceptron_experiments import get_dimensions
+
+class AllPlots:
+    def __init__(self, all_count, title):
+        self.dimensions = get_dimensions(all_count)
+        plt.rcParams["figure.figsize"] = (10, 7.5)
+        f, self.axis = plt.subplots(*self.dimensions)
+        f.suptitle(title)
+        f.tight_layout(pad=3)
+        self.order_numb = 0
+        self.current = CurrentPlot(self.axis[self.order_numb // self.dimensions[1], self.order_numb % self.dimensions[1]])
+
+    def next(self):
+        self.order_numb = (self.order_numb + 1) % (self.dimensions[0] * self.dimensions[1])
+        self.current = CurrentPlot(self.axis[self.order_numb // self.dimensions[1], self.order_numb % self.dimensions[1]])
+
+
+class CurrentPlot:
+    def __init__(self, plot_current):
         self.plot_current = plot_current
         self.plot_current.axhline(y=0, color="k")
         self.plot_current.axvline(x=0, color="k")

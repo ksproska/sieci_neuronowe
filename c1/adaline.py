@@ -1,8 +1,7 @@
-from usefull import randomize, reproduce_x_times, get_random_weights, count_cost, apply_func, sign_bipolar, \
-    get_random_except_first_row, MyCustomPlot
+from usefull import reproduce_x_times, get_random_weights, count_cost, apply_func, sign_bipolar, \
+    get_random_except_first_row, CurrentPlot
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 
 
 x_original = np.array(
@@ -18,8 +17,7 @@ d_xor = np.array([-1, 1, 1, -1])
 
 
 def main():
-    current_plt = MyCustomPlot()
-    current_plt.set_plot(plt)
+    current_plt = CurrentPlot(plt)
     repetitions = 100
     test_percent = 0.25
     alfa = 0.001

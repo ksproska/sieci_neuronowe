@@ -1,33 +1,47 @@
-from usefull import MyCustomPlot, bipolar, get_random_except_first_row, get_random_weights, reproduce_x_times, unipolar
+from math import sqrt
+
+from usefull import CurrentPlot, bipolar, get_random_except_first_row, get_random_weights, reproduce_x_times, unipolar, \
+    AllPlots
 import numpy as np
 import matplotlib.pyplot as plt
 
-from math import sqrt
 
-def get_dimensions(n):
-    tempSqrt = sqrt(n)
-    divisors = []
-    currentDiv = 1
-    for currentDiv in range(n):
-        if n % float(currentDiv + 1) == 0:
-         divisors.append(currentDiv+1)
-    #print divisors this is to ensure that we're choosing well
-    hIndex = min(range(len(divisors)), key=lambda i: abs(divisors[i]-sqrt(n)))
-    
-    if divisors[hIndex]*divisors[hIndex] == n:
-        return divisors[hIndex], divisors[hIndex]
-    else:
-        wIndex = hIndex + 1
-        return divisors[hIndex], divisors[wIndex]
+class Perceptron:
+    def __init__(self, x_all, d_all, test_percent):
+        test_size = int(x_all.shape[1] * test_percent)
+        train_size = int(x_all.shape[1] - test_size)
+        self.x_train, self.x_test = x_all[:, :train_size], x_all[:, train_size:]
+        self.d_train, self.d_test = d_all[:train_size], d_all[train_size:]
+        self.weights = get_random_weights(x_all.shape[0])
+
+    def count(self, alfa, apply_estimate_func, max_epoch):
+        epoch_count = 0
+        y_train = None
+        while np.mean(self.d_train == y_train) < 1.00 and epoch_count < max_epoch:
+            epoch_count += 1
+            count = self.x_train.T @ self.weights
+            y_train = apply_estimate_func(count)
+            dw = (self.d_train - y_train) @ self.x_train.T
+            self.weights = self.weights + alfa * dw
+
+        count = self.x_test.T @ self.weights
+        y_test = apply_estimate_func(count)
+        self.matching_percent = np.mean(self.d_test == y_test) * 100
+        self.title = f'epochs: {epoch_count} - alfa: {alfa} - {self.matching_percent}%'
+
+    def draw(self, current_plt):
+        current_plt.set_title(self.title)
+        current_plt.scatter(self.x_test[1, :], self.x_test[2, :], self.d_test)
+        current_plt.plot_line(0.0, 1.0, lambda x_vals: (-self.weights[1] * x_vals - self.weights[0]) / self.weights[2])
 
 
-class PerceptronExperiment:
+class PerceptronExperiments:
     x_original = np.array(
-    [
-        [1, 1, 1, 1],
-        [0, 0, 1, 1],
-        [0, 1, 0, 1]
-    ]
+        [
+            [1, 1, 1, 1],
+            [0, 0, 1, 1],
+            [0, 1, 0, 1]
+        ]
     )
 
     d_and = {
@@ -63,19 +77,17 @@ class PerceptronExperiment:
         self.all_individuals_sizes = all_individuals_sizes
     
     def run(self):
-        plt.rcParams["figure.figsize"] = (10, 7.5)
-        current_plt = MyCustomPlot()
-        # repetitions = 200
         test_percent = 0.25
-
         teta = 0
         max_epoch = 100
 
-        dimensions = get_dimensions(len(self.input_cases) * len(self.activation_functions) * len(self.alfas) * len(self.all_individuals_sizes))
-        f, axis = plt.subplots(*dimensions)
-        f.suptitle(self.figure_name)
-        f.tight_layout(pad=3)
-        # f.set_size_inches(dimensions[1]*8, dimensions[0]*8, forward=True)
+        all_plots = AllPlots(len(self.input_cases) * len(self.activation_functions) * len(self.alfas) * len(self.all_individuals_sizes), self.figure_name)
+        # dimensions = get_dimensions(len(self.input_cases) * len(self.activation_functions) * len(self.alfas) * len(self.all_individuals_sizes))
+        # plt.rcParams["figure.figsize"] = (10, 7.5)
+        # f, axis = plt.subplots(*dimensions)
+        # f.suptitle(self.figure_name)
+        # f.tight_layout(pad=3)
+
         order_numb = 0
         for input_case in self.input_cases:
             for input_func in self.activation_functions:
@@ -89,42 +101,23 @@ class PerceptronExperiment:
                         d_all = reproduce_x_times(d_case, repetitions)
                         x_all = x_all + get_random_except_first_row(x_all.shape)
 
-                        test_size = int(x_all.shape[1] * test_percent)
-                        train_size = int(x_all.shape[1] - test_size)
-                        x_train, x_test = x_all[:, :train_size], x_all[:, train_size:]
-                        d_train, d_test = d_all[:train_size], d_all[train_size:]
-                        weights = get_random_weights(x_all.shape[0])
+                        perceptron = Perceptron(x_all, d_all, test_percent)
+                        perceptron.count(alfa, apply_estimate_func, max_epoch)
 
-                        epoch_count = 0
-                        y_train = None
-                        while np.mean(d_train == y_train) < 1.00 and epoch_count < max_epoch:
-                            epoch_count += 1
-                            count = x_train.T @ weights
-                            y_train = apply_estimate_func(count)
-                            dw = (d_train - y_train) @ x_train.T
-                            weights = weights + alfa * dw
-
-                        count = x_test.T @ weights
-                        y_test = apply_estimate_func(count)
-                        matching_percent = np.mean(d_test == y_test) * 100
-
-                        current_plt.set_plot(axis[order_numb // dimensions[1], order_numb % dimensions[1]])
-                        # current_plt.tight_layout(pad=5.0)
-                        current_plt.set_title(f'{input_case} - {input_func} - size {individuals_size}\nepochs: {epoch_count} - alfa: {alfa} - {matching_percent}%')
-                        current_plt.scatter(x_test[1, :], x_test[2, :], d_test)
-                        current_plt.plot_line(0.0, 1.0, lambda x_vals: (-weights[1] * x_vals - weights[0]) / weights[2])
-                        order_numb += 1
+                        # current_plt = CurrentPlot(axis[order_numb // dimensions[1], order_numb % dimensions[1]])
+                        perceptron.draw(all_plots.current)
+                        all_plots.next()
         plt.show()
 
 
 if __name__ == '__main__':
-    experiment = PerceptronExperiment("all test cases", ["AND", "OR", "XOR"], ["unipolar", "bipolar"], [0.1], [200])
+    experiment = PerceptronExperiments("all test cases", ["AND", "OR", "XOR"], ["unipolar", "bipolar"], [0.1], [200])
     experiment.run()
-    experiment = PerceptronExperiment("unipolar - different alfas", ["AND"], ["unipolar"], [0.001, 0.01, 0.1, 1], [200])
+    experiment = PerceptronExperiments("unipolar - different alfas", ["AND"], ["unipolar"], [0.001, 0.01, 0.1, 1], [200])
     experiment.run()
-    experiment = PerceptronExperiment("bipolar - different alfas", ["AND"], ["bipolar"], [0.001, 0.01, 0.1, 1], [200])
+    experiment = PerceptronExperiments("bipolar - different alfas", ["AND"], ["bipolar"], [0.001, 0.01, 0.1, 1], [200])
     experiment.run()
-    experiment = PerceptronExperiment("unipolar vs bipolar - different alfas", ["AND"], ["unipolar", "bipolar"], [0.001, 0.01, 0.1, 1], [200])
+    experiment = PerceptronExperiments("unipolar vs bipolar - different alfas", ["AND"], ["unipolar", "bipolar"], [0.001, 0.01, 0.1, 1], [200])
     experiment.run()
-    experiment = PerceptronExperiment("different case sizes", ["AND"], ["unipolar", "bipolar"], [0.1], [16, 32, 50, 100])
+    experiment = PerceptronExperiments("different case sizes", ["AND"], ["unipolar", "bipolar"], [0.1], [16, 32, 50, 100])
     experiment.run()
