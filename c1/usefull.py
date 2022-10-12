@@ -27,7 +27,8 @@ def get_dimensions(n):
 class AllPlots:
     def __init__(self, all_count, title):
         self.dimensions = get_dimensions(all_count)
-        plt.rcParams["figure.figsize"] = (10, 7.5)
+        d = self.dimensions[::-1]
+        plt.rcParams["figure.figsize"] = (d[0]*4, d[1]*4)
         f, self.axis = plt.subplots(*self.dimensions)
         f.suptitle(title)
         f.tight_layout(pad=3)
@@ -55,7 +56,6 @@ class CurrentPlot:
 
     def set_title(self, title):
         self.plot_current.set_title(title)
-
 
 
 def delta_w(d, y, x):

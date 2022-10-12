@@ -1,7 +1,4 @@
-from math import sqrt
-
-from usefull import CurrentPlot, bipolar, get_random_except_first_row, get_random_weights, reproduce_x_times, unipolar, \
-    AllPlots
+from usefull import bipolar, get_random_except_first_row, get_random_weights, reproduce_x_times, unipolar, AllPlots
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -29,20 +26,29 @@ class Perceptron:
         self.matching_percent = np.mean(self.d_test == y_test) * 100
         self.title = f'epochs: {epoch_count} - alfa: {alfa} - {self.matching_percent}%'
 
-    def draw(self, current_plt):
-        current_plt.set_title(self.title)
+    def draw(self, current_plt, title_prev, left):
+        current_plt.set_title(title_prev + "\n" + self.title)
         current_plt.scatter(self.x_test[1, :], self.x_test[2, :], self.d_test)
-        current_plt.plot_line(0.0, 1.0, lambda x_vals: (-self.weights[1] * x_vals - self.weights[0]) / self.weights[2])
+        current_plt.plot_line(left, 1.0, lambda x_vals: (-self.weights[1] * x_vals - self.weights[0]) / self.weights[2])
 
 
 class PerceptronExperiments:
-    x_original = np.array(
-        [
-            [1, 1, 1, 1],
-            [0, 0, 1, 1],
-            [0, 1, 0, 1]
-        ]
-    )
+    x_original = {
+        unipolar: np.array(
+            [
+                [1, 1, 1, 1],
+                [0, 0, 1, 1],
+                [0, 1, 0, 1]
+            ]
+        ),
+        bipolar: np.array(
+            [
+                [1, 1, 1, 1],
+                [-1, -1, 1, 1],
+                [-1, 1, -1, 1]
+            ]
+        ),
+    }
 
     d_and = {
         unipolar: np.array([0, 0, 0, 1]),
@@ -82,13 +88,7 @@ class PerceptronExperiments:
         max_epoch = 100
 
         all_plots = AllPlots(len(self.input_cases) * len(self.activation_functions) * len(self.alfas) * len(self.all_individuals_sizes), self.figure_name)
-        # dimensions = get_dimensions(len(self.input_cases) * len(self.activation_functions) * len(self.alfas) * len(self.all_individuals_sizes))
-        # plt.rcParams["figure.figsize"] = (10, 7.5)
-        # f, axis = plt.subplots(*dimensions)
-        # f.suptitle(self.figure_name)
-        # f.tight_layout(pad=3)
 
-        order_numb = 0
         for input_case in self.input_cases:
             for input_func in self.activation_functions:
                 for alfa in self.alfas:
@@ -97,15 +97,14 @@ class PerceptronExperiments:
                         apply_estimate_func = np.vectorize(lambda v: self.func_types[input_func](teta, v))
 
                         d_case = self.d_cases[input_case][self.func_types[input_func]]
-                        x_all = reproduce_x_times(self.x_original, repetitions)
+                        x_all = reproduce_x_times(self.x_original[self.func_types[input_func]], repetitions)
                         d_all = reproduce_x_times(d_case, repetitions)
                         x_all = x_all + get_random_except_first_row(x_all.shape)
 
                         perceptron = Perceptron(x_all, d_all, test_percent)
                         perceptron.count(alfa, apply_estimate_func, max_epoch)
 
-                        # current_plt = CurrentPlot(axis[order_numb // dimensions[1], order_numb % dimensions[1]])
-                        perceptron.draw(all_plots.current)
+                        perceptron.draw(all_plots.current, f'{input_case} - {input_func} - size: {individuals_size}', 0.0 if input_func == "unipolar" else -1.0)
                         all_plots.next()
         plt.show()
 
