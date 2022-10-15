@@ -1,38 +1,7 @@
-from operator import le
-from usefull import bipolar, get_random_except_first_row, get_random_weights, reproduce_x_times, unipolar, AllPlots
+from c1.perceptron import Perceptron
+from usefull import bipolar, get_random_except_first_row, reproduce_x_times, unipolar, AllPlots
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-class Perceptron:
-    def __init__(self, x_all, d_all, test_percent, wrange):
-        test_size = int(x_all.shape[1] * test_percent)
-        train_size = int(x_all.shape[1] - test_size)
-        self.x_train, self.x_test = x_all[:, :train_size], x_all[:, train_size:]
-        self.d_train, self.d_test = d_all[:train_size], d_all[train_size:]
-        self.weights = get_random_weights(x_all.shape[0], *wrange)
-
-    def count(self, alfa, apply_estimate_func, max_epoch):
-        epoch_count = 0
-        y_train = None
-        while np.mean(self.d_train == y_train) < 1.00 and epoch_count < max_epoch:
-            epoch_count += 1
-            count = self.x_train.T @ self.weights
-            y_train = apply_estimate_func(count)
-            dw = (self.d_train - y_train) @ self.x_train.T
-            self.weights = self.weights + alfa * dw
-
-        count = self.x_test.T @ self.weights
-        y_test = apply_estimate_func(count)
-        self.matching_percent = np.mean(self.d_test == y_test) * 100
-        self.title = f'epochs: {epoch_count} - alfa: {alfa} - {self.matching_percent}%'
-
-    def draw(self, current_plt, title_prev):
-        current_plt.set_title(title_prev + "\n" + self.title)
-        current_plt.scatter(self.x_test[1, :], self.x_test[2, :], self.d_test)
-    
-    def draw_line(self, current_plt, left):
-        current_plt.plot_line(left, 1.0, lambda x_vals: (-self.weights[1] * x_vals - self.weights[0]) / self.weights[2])
 
 
 class PerceptronExperiments:
@@ -109,7 +78,7 @@ class PerceptronExperiments:
 
                                 perceptron = Perceptron(x_all, d_all, test_percent, wrange)
                                 
-                                perceptron.count(alfa, apply_estimate_func, max_epoch)
+                                perceptron.count(alfa, apply_estimate_func)
 
                                 perceptron.draw(all_plots.current, f'{input_case} - {input_func} - size: {individuals_size}\nweights start range: {wrange}')
                                 perceptron.draw_line(all_plots.current, 0.0 if input_func == "unipolar" else -1.0)

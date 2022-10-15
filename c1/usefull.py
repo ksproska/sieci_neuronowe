@@ -73,10 +73,8 @@ def delta_w_adaline(d, y, x):
     return -2 * delt
 
 
-def get_random_weights(length, min_val=0.01, max_val=0.2):
-    # return np.random.randn(1, length) * min_val
-    # ToDo gotowa funkcja w numpy -> np.random.rand(1,2) / 10
-    return np.array([random.uniform(min_val, max_val) for _ in range(length)])
+def get_random_weights(length, min_val, max_val):
+    return np.array([[random.uniform(min_val, max_val) for _ in range(length)]]).T
 
 
 def sign_bipolar(x):
