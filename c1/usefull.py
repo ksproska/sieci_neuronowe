@@ -46,7 +46,7 @@ class CurrentPlot:
         self.plot_current.axhline(y=0, color="k")
         self.plot_current.axvline(x=0, color="k")
         self.plot_current.grid(True)
-        plt.sca(self.plot_current)
+        # plt.sca(self.plot_current)
         plt.ylim(-1, 1)
         plt.xlim(-1, 1)
 

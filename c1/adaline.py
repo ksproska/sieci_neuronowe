@@ -31,7 +31,7 @@ def main():
     train_size = int(x_all.shape[1] - test_size)
     x_train, x_test = x_all[:, :train_size], x_all[:, train_size:]
 
-    weights = get_random_weights(x_all.shape[0])
+    weights = get_random_weights(x_all.shape[0], -0.1, 0.1)
     d_train, d_test = d_all[:train_size], d_all[train_size:]
 
     allowed_error = 0.25
@@ -46,7 +46,7 @@ def main():
         weights = weights + (alfa * x_train @ delta_root)
 
     z = count_cost(weights, x_test.T)
-    matching_percent = np.mean(d_test == apply_func(z, sign_bipolar)).round() * 100
+    matching_percent = np.mean(d_test == np.vectorize(sign_bipolar)(z)).round() * 100
 
     # plot all data and show
     plt.title(f'AND - epochs: {epoch} - alfa: {alfa}\nallowed error {allowed_error} - match: {matching_percent}%')
