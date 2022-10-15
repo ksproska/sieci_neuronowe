@@ -25,13 +25,12 @@ def sign_bipolar(x):
 
 
 class Adaline:
-    def __init__(self, x_train, d_train, x_test, d_test, estimate_func, alfa, allowed_error, wrange):
+    def __init__(self, x_train, d_train, x_test, d_test, alfa, allowed_error, wrange):
         self.x_train = x_train
         self.x_test = x_test
         self.d_train = d_train
         self.d_test = d_test
         self.alfa = alfa
-        self.estimate_func = estimate_func
         self.allowed_error = allowed_error
         self.wrange = wrange
         self.weights_output = []
@@ -106,7 +105,6 @@ def bipolar(teta, z):
 
 def main():
     repetitions = 200
-    estimate_func = lambda v: unipolar(0, v)
     x_all = reproduce_x_times(x_unipolar, repetitions)
     d_all = reproduce_x_times(d_bipolar, repetitions)
     x_all = x_all + get_random_except_first_row(x_all.shape)
@@ -116,7 +114,7 @@ def main():
     x_train, x_test = x_all[:, :train_size], x_all[:, train_size:]
     d_train, d_test = d_all[:, :train_size], d_all[:, train_size:]
 
-    perceptron = Adaline(x_train, d_train, x_test, d_test, estimate_func, 0.0001, 0.4, (-0.1, 0.1))
+    perceptron = Adaline(x_train, d_train, x_test, d_test, 0.0001, 0.4, (-0.1, 0.1))
     perceptron.count()
     perceptron.display()
     print(perceptron.to_string)
