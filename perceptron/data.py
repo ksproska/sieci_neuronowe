@@ -53,9 +53,9 @@ class Perceptron:
         weights = get_random_weights(self.x_train.shape[0], *self.wrange)
         while np.mean(self.d_train.T == y_train) < 1.00 and epoch_count < 100:
             epoch_count += 1
-            count = self.x_train.T @ weights                   # (3, 600) (3, 1) -> (600, 1)
-            y_train = np.vectorize(self.estimate_func)(count)  # (600, 1)
-            dw = self.x_train @ (self.d_train.T - y_train)     # (3, 600) (1, 600) -> (1, 3)
+            count = self.x_train.T @ weights
+            y_train = np.vectorize(self.estimate_func)(count)
+            dw = self.x_train @ (self.d_train.T - y_train)
             weights = weights + self.alfa * dw
 
         count = self.x_test.T @ weights
