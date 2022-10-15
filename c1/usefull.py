@@ -31,7 +31,7 @@ class AllPlots:
         plt.rcParams["figure.figsize"] = (d[0]*4, d[1]*4)
         f, self.axis = plt.subplots(*self.dimensions)
         f.suptitle(title)
-        f.tight_layout(pad=3)
+        f.tight_layout(pad=5)
         self.order_numb = 0
         self.current = CurrentPlot(self.axis[self.order_numb // self.dimensions[1], self.order_numb % self.dimensions[1]])
 
@@ -46,6 +46,9 @@ class CurrentPlot:
         self.plot_current.axhline(y=0, color="k")
         self.plot_current.axvline(x=0, color="k")
         self.plot_current.grid(True)
+        plt.sca(self.plot_current)
+        plt.ylim(-1, 1)
+        plt.xlim(-1, 1)
 
     def scatter(self, xs, ys, groups):
         self.plot_current.scatter(xs, ys, c=groups)
@@ -78,7 +81,7 @@ def get_random_weights(length, min_val=0.01, max_val=0.2):
 
 def sign_bipolar(x):
     if x < 0:
-        return -1
+         return -1
     return 1
 
 

@@ -25,27 +25,31 @@ def main():
 
     x_all = reproduce_x_times(x_original, repetitions)
     x_all = x_all + get_random_except_first_row(x_all.shape)
-    d_all = reproduce_x_times(d_and, repetitions).reshape((x_all.shape[1], 1))
+    d_all = reproduce_x_times(d_and, repetitions)
 
     test_size = int(x_all.shape[1] * test_percent)
     train_size = int(x_all.shape[1] - test_size)
     x_train, x_test = x_all[:, :train_size], x_all[:, train_size:]
 
-    weights = get_random_weights(x_all.shape[0]).reshape((x_all.shape[0], 1))
+    weights = get_random_weights(x_all.shape[0])
     d_train, d_test = d_all[:train_size], d_all[train_size:]
 
-    for epoch in range(epoch_numb):
-        for i in range(x_train.shape[1]):
-            z = weights.T @ x_train[:, i].reshape(3, 1)
-            delta_root = d_train[i] - z
-            weights = weights + (alfa * delta_root * x_train[:, i].reshape(3, 1))
+    allowed_error = 0.25
+    err = None 
+    epoch = 0
+
+    while err is None or err > allowed_error and epoch < epoch_numb:
+        epoch += 1
+        z = x_train.T @ weights
+        delta_root = d_train - z
+        err = np.mean(np.square(delta_root))
+        weights = weights + (alfa * x_train @ delta_root)
 
     z = count_cost(weights, x_test.T)
     matching_percent = np.mean(d_test == apply_func(z, sign_bipolar)).round() * 100
-    # print(pd.DataFrame({"d_test": d_test.flatten(), "z": z.round().flatten()}).tail(20))
 
     # plot all data and show
-    plt.title(f'AND - epochs: {epoch_numb} - alfa: {alfa} - match: {matching_percent}%')
+    plt.title(f'AND - epochs: {epoch} - alfa: {alfa}\nallowed error {allowed_error} - match: {matching_percent}%')
     plt.scatter(x_test[1, :], x_test[2, :], c=d_test)
     current_plt.plot_line(0.0, 1.0, lambda x_vals: (-weights[1] * x_vals - weights[0]) / weights[2])
     plt.show()

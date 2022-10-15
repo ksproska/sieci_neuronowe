@@ -1,15 +1,16 @@
+from operator import le
 from usefull import bipolar, get_random_except_first_row, get_random_weights, reproduce_x_times, unipolar, AllPlots
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 class Perceptron:
-    def __init__(self, x_all, d_all, test_percent):
+    def __init__(self, x_all, d_all, test_percent, wrange):
         test_size = int(x_all.shape[1] * test_percent)
         train_size = int(x_all.shape[1] - test_size)
         self.x_train, self.x_test = x_all[:, :train_size], x_all[:, train_size:]
         self.d_train, self.d_test = d_all[:train_size], d_all[train_size:]
-        self.weights = get_random_weights(x_all.shape[0])
+        self.weights = get_random_weights(x_all.shape[0], *wrange)
 
     def count(self, alfa, apply_estimate_func, max_epoch):
         epoch_count = 0
@@ -26,9 +27,11 @@ class Perceptron:
         self.matching_percent = np.mean(self.d_test == y_test) * 100
         self.title = f'epochs: {epoch_count} - alfa: {alfa} - {self.matching_percent}%'
 
-    def draw(self, current_plt, title_prev, left):
+    def draw(self, current_plt, title_prev):
         current_plt.set_title(title_prev + "\n" + self.title)
         current_plt.scatter(self.x_test[1, :], self.x_test[2, :], self.d_test)
+    
+    def draw_line(self, current_plt, left):
         current_plt.plot_line(left, 1.0, lambda x_vals: (-self.weights[1] * x_vals - self.weights[0]) / self.weights[2])
 
 
@@ -75,48 +78,56 @@ class PerceptronExperiments:
         "bipolar": bipolar,
     }
 
-    def __init__(self, figure_name, input_cases, activation_functions, alfas, all_individuals_sizes):
+    def __init__(self, figure_name, input_cases, activation_functions, alfas, all_individuals_sizes, weights_ranges):
         self.figure_name = figure_name
         self.input_cases = input_cases
         self.activation_functions = activation_functions
         self.alfas = alfas
         self.all_individuals_sizes = all_individuals_sizes
+        self.weights_ranges = weights_ranges
     
     def run(self):
         test_percent = 0.25
         teta = 0
         max_epoch = 100
 
-        all_plots = AllPlots(len(self.input_cases) * len(self.activation_functions) * len(self.alfas) * len(self.all_individuals_sizes), self.figure_name)
+        all_plots = AllPlots(len(self.input_cases) * len(self.activation_functions) * len(self.alfas) * len(self.all_individuals_sizes) * len(self.weights_ranges), self.figure_name)
 
         for input_case in self.input_cases:
             for input_func in self.activation_functions:
                 for alfa in self.alfas:
                     for individuals_size in self.all_individuals_sizes:
-                        repetitions = int(individuals_size/4)
-                        apply_estimate_func = np.vectorize(lambda v: self.func_types[input_func](teta, v))
+                        for wrange in self.weights_ranges:
+                            repetitions = int(individuals_size/4)
+                            apply_estimate_func = np.vectorize(lambda v: self.func_types[input_func](teta, v))
 
-                        d_case = self.d_cases[input_case][self.func_types[input_func]]
-                        x_all = reproduce_x_times(self.x_original[self.func_types[input_func]], repetitions)
-                        d_all = reproduce_x_times(d_case, repetitions)
-                        x_all = x_all + get_random_except_first_row(x_all.shape)
+                            for i in range(10):
+                                d_case = self.d_cases[input_case][self.func_types[input_func]]
+                                x_all = reproduce_x_times(self.x_original[self.func_types[input_func]], repetitions)
+                                d_all = reproduce_x_times(d_case, repetitions)
+                                x_all = x_all + get_random_except_first_row(x_all.shape)
 
-                        perceptron = Perceptron(x_all, d_all, test_percent)
-                        perceptron.count(alfa, apply_estimate_func, max_epoch)
+                                perceptron = Perceptron(x_all, d_all, test_percent, wrange)
+                                
+                                perceptron.count(alfa, apply_estimate_func, max_epoch)
 
-                        perceptron.draw(all_plots.current, f'{input_case} - {input_func} - size: {individuals_size}', 0.0 if input_func == "unipolar" else -1.0)
-                        all_plots.next()
+                                perceptron.draw(all_plots.current, f'{input_case} - {input_func} - size: {individuals_size}\nweights start range: {wrange}')
+                                perceptron.draw_line(all_plots.current, 0.0 if input_func == "unipolar" else -1.0)
+
+                            all_plots.next()
         plt.show()
 
 
 if __name__ == '__main__':
-    experiment = PerceptronExperiments("all test cases", ["AND", "OR", "XOR"], ["unipolar", "bipolar"], [0.1], [200])
+    # experiment = PerceptronExperiments("all test cases", ["AND", "OR", "XOR"], ["unipolar", "bipolar"], [0.1], [200], [(0.1, 0.2)])
+    # experiment.run()
+    experiment = PerceptronExperiments("unipolar - different alfas", ["AND"], ["unipolar"], [0.0001, 0.001, 0.01, 0.1, 0.2, 0.5, 0.8, 1], [200], [(0.1, 0.2)])
     experiment.run()
-    experiment = PerceptronExperiments("unipolar - different alfas", ["AND"], ["unipolar"], [0.001, 0.01, 0.1, 1], [200])
+    # experiment = PerceptronExperiments("bipolar - different alfas", ["AND"], ["bipolar"], [0.001, 0.01, 0.1, 1], [200], [(0.1, 0.2)])
+    # experiment.run()
+    experiment = PerceptronExperiments("unipolar vs bipolar", ["AND"], ["unipolar", "bipolar"], [0.01, 0.01, 0.01, 0.01, 0.01], [200], [(-0.1, 0.1)])
     experiment.run()
-    experiment = PerceptronExperiments("bipolar - different alfas", ["AND"], ["bipolar"], [0.001, 0.01, 0.1, 1], [200])
-    experiment.run()
-    experiment = PerceptronExperiments("unipolar vs bipolar - different alfas", ["AND"], ["unipolar", "bipolar"], [0.001, 0.01, 0.1, 1], [200])
-    experiment.run()
-    experiment = PerceptronExperiments("different case sizes", ["AND"], ["unipolar", "bipolar"], [0.1], [16, 32, 50, 100])
+    # experiment = PerceptronExperiments("different case sizes", ["AND"], ["unipolar", "bipolar"], [0.1], [16, 32, 50, 100], [(0.1, 0.2)])
+    # experiment.run()
+    experiment = PerceptronExperiments("different weights start ranges", ["AND"], ["unipolar"], [0.1], [200], [(-1.0, 1.0), (-0.9, 0.9), (-0.8, 0.8), (-0.6, 0.6), (-0.5, 0.5), (-0.3, 0.3), (-0.2, 0.2), (-0.1, 0.1)])
     experiment.run()

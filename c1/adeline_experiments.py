@@ -1,8 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from usefull import AllPlots, reproduce_x_times, get_random_except_first_row, get_random_weights, count_cost, \
-    apply_func, sign_bipolar
+from usefull import AllPlots, reproduce_x_times, get_random_except_first_row, get_random_weights, count_cost, sign_bipolar, apply_func
 
 
 class Adaline:
@@ -13,23 +12,28 @@ class Adaline:
         self.d_train, self.d_test = d_all[:train_size], d_all[train_size:]
         self.weights = get_random_weights(x_all.shape[0])
 
-    def count(self, alfa, max_epoch):
-        self.weights.reshape((self.x_test.shape[0], 1))
-        epoch_numb = 100
-        for epoch in range(epoch_numb):
-            for i in range(self.x_train.shape[1]):
-                z = self.weights.T @ self.x_train[:, i].reshape(3, 1)
-                delta_root = self.d_train[i] - z
-                self.weights = self.weights + (alfa * delta_root * self.x_train[:, i].reshape(3, 1))
+    def count(self, alfa, allowed_error):
+        epoch_numb = 1000
+        err = None 
+        epoch = 0
+
+        while err is None or err > allowed_error and epoch < epoch_numb:
+            epoch += 1
+            z = self.x_train.T @ self.weights
+            delta_root = self.d_train - z
+            err = np.mean(np.square(delta_root))
+            self.weights = self.weights + (alfa * self.x_train @ delta_root)
 
         z = count_cost(self.weights, self.x_test.T)
-        self.matching_percent = np.mean(self.d_test == np.vectorize(sign_bipolar)(z)).round() * 100
-        self.title = f'alfa: {alfa} - {self.matching_percent}%'
+        self.matching_percent = np.mean(self.d_test == apply_func(z, sign_bipolar)).round() * 100
+
+        self.title = f'alfa: {alfa} - epoch: {epoch} - {self.matching_percent}%'
+        print(self.weights)
 
     def draw(self, current_plt, title_prev):
         current_plt.set_title(title_prev + "\n" + self.title)
         current_plt.scatter(self.x_test[1, :], self.x_test[2, :], self.d_test)
-        current_plt.plot_line(-1.0, 1.0, lambda x_vals: (-self.weights[0][1] * x_vals - self.weights[0][0]) / self.weights[0][2])
+        current_plt.plot_line(0.0, 1.0, lambda x_vals: (-self.weights[1] * x_vals - self.weights[0]) / self.weights[2])
 
 
 class AdalineExperiments:
@@ -60,7 +64,7 @@ class AdalineExperiments:
     def run(self):
         test_percent = 0.25
         teta = 0
-        max_epoch = 1000
+        allowed_error = 0.25
 
         all_plots = AllPlots(
             len(self.input_cases) * len(self.alfas) * len(self.all_individuals_sizes),
@@ -77,7 +81,7 @@ class AdalineExperiments:
                     x_all = x_all + get_random_except_first_row(x_all.shape)
 
                     adaline = Adaline(x_all, d_all, test_percent)
-                    adaline.count(alfa, max_epoch)
+                    adaline.count(alfa, allowed_error)
 
                     adaline.draw(all_plots.current, f'{input_case} - size: {individuals_size}')
                     all_plots.next()
@@ -85,7 +89,7 @@ class AdalineExperiments:
 
 
 if __name__ == '__main__':
-    experiment = AdalineExperiments("all test cases", ["AND", "OR", "XOR"], [0.001, 0.01], [200])
+    experiment = AdalineExperiments("all test cases", ["AND"], [0.001, 0.01], [100, 1000])
     experiment.run()
     # experiment = AdalineExperiments("unipolar - different alfas", ["AND"], [0.001, 0.01, 0.1, 1], [200])
     # experiment.run()
