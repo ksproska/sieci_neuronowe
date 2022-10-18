@@ -74,6 +74,10 @@ class Perceptron:
         return statistics.mean(self.epoch_nums)
 
     def display(self):
+        plt.rcParams.update({
+            'font.family': 'monospace'
+        })
+        plt.title(f"Perceptron\n{self.to_string}", ha="left", x=-.12)
         plt.xlim(-0.25, 1.25)
         plt.ylim(-0.25, 1.25)
         plt.style.use('ggplot')
