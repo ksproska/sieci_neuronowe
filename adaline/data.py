@@ -25,12 +25,12 @@ def sign_bipolar(x):
 
 
 class Adaline:
-    def __init__(self, x_train, d_train, x_test, d_test, alfa, allowed_error, wrange):
+    def __init__(self, x_train, d_train, x_test, d_test, mu, allowed_error, wrange):
         self.x_train = x_train
         self.x_test = x_test
         self.d_train = d_train
         self.d_test = d_test
-        self.alfa = alfa
+        self.mu = mu
         self.allowed_error = allowed_error
         self.wrange = wrange
         self.weights_output = []
@@ -41,7 +41,7 @@ class Adaline:
     def to_string(self):
         return f'epochs:     {self.average_epoch_count}\n' \
                f'matching:   {self.average_matching_percent}%\n' \
-               f'alfa:       {self.alfa}\n' \
+               f'mu:       {self.mu}\n' \
                f'w. range:   {self.wrange}\n' \
                f'train size: {self.x_train.shape[1]}\n' \
                f'max err:    {self.allowed_error}'
@@ -55,7 +55,7 @@ class Adaline:
             z = self.x_train.T @ weights
             delta_root = self.d_train.T - z
             err = np.mean(np.square(delta_root))
-            weights = weights + (self.alfa * self.x_train @ delta_root)
+            weights = weights + (self.mu * self.x_train @ delta_root)
 
         z = self.x_test.T @ weights
 
