@@ -22,6 +22,20 @@ d_unipolar = np.array([[0, 0, 0, 1]])
 d_bipolar = np.array([[-1, -1, -1, 1]])
 
 
+x_unipolar_no_teta = np.array(
+    [
+        [0, 0, 1, 1],
+        [0, 1, 0, 1]
+    ]
+)
+x_bipolar_no_teta = np.array(
+    [
+        [-1, -1, 1, 1],
+        [-1, 1, -1, 1]
+    ]
+)
+
+
 def get_random_weights(length, min_val, max_val):
     return np.array([[random.uniform(min_val, max_val) for _ in range(length)]]).T
 
@@ -78,8 +92,8 @@ class Perceptron:
             'font.family': 'monospace'
         })
         plt.title(f"Perceptron\n{self.to_string}", ha="left", x=-.12)
-        plt.xlim(-0.25, 1.25)
-        plt.ylim(-0.25, 1.25)
+        plt.xlim(-1.25, 1.25)
+        plt.ylim(-1.25, 1.25)
         plt.style.use('ggplot')
         x_range = np.arange(-2, 4)
         plt.scatter(self.x_test[1, :], self.x_test[2, :], c=self.d_test)
@@ -98,6 +112,11 @@ def reproduce_x_times(input, num_to_merge):
 def get_random_except_first_row(shape):
     rand_matrix = np.random.rand(shape[0], shape[1]) / 10 - 0.05
     rand_matrix[0, :] = 0
+    return rand_matrix
+
+
+def get_random(shape):
+    rand_matrix = np.random.rand(shape[0], shape[1]) / 10 - 0.05
     return rand_matrix
 
 

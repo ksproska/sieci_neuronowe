@@ -41,7 +41,7 @@ class Adaline:
     def to_string(self):
         return f'epochs:     {self.average_epoch_count}\n' \
                f'matching:   {self.average_matching_percent}%\n' \
-               f'mu:       {self.mu}\n' \
+               f'mu:         {self.mu}\n' \
                f'w. range:   {self.wrange}\n' \
                f'train size: {self.x_train.shape[1]}\n' \
                f'max err:    {self.allowed_error}'
