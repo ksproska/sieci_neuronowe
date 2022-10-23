@@ -1,0 +1,136 @@
+W sieci neuronowe
+uczenie propagacją wsteczną ???
+24 listopada kolos
+8 grudnia poprawka
+
+test, 1-2 pytania otwarte, możliwe zad obliczeniowe (kolos)
+konsultacja: 341 D21 pn 12 wt 14
+
+17 października godz 15 (z 1 grudnia)
+test elektroniczny
+______________________________________________________________________________________________________
+
+dane (z wejściami) na które dane podajemy / podawany wzorzec wejścowy
+
+MLP - mulilayerd perceptron
+
+0  1 2 3
+o  o o o - wyjścia - dekodowanie odpowiedzi
+/\//\/\\
+O  O O O - neurony - liczy całkowity sygnał ze wszystkich połączeń
+/\//\/\/ - połączenia (pełne - jeśli co??) - wyuczanie polega na przypisywaniu wag do połączeń [-1, 1]
+o  o o o - wejścia
+A  A A A
+|  | | |
+x1 x2x3x4
+
+1) pary wejście wyjście <x1, d1> = wzorce w uczeniu nadzorowanym (etykieta -> nadzór)
+2) uczenie nienadzorowane
+3) ze wzmocnieniem
+
+DANE!
+
+[x1 ... xn] - tracimy strukturę przestrzenną
+zalety:
+- proste w implementacji
+- cała wiedza o problemie leży w danych, nie ma algorytmu jak problem rozwiązać
+- nie musimy przeprogramowywać aplikacji, tylko przygotować inne dane
+- dwa tryby pracy (uczenie i wykorzystanie sieci)
+
+wady:
+- konieczność posiadania wielu danych
+- brak zrozumienia jak podejmowane są decyzje (black box)
+
+wagi =/- -> wzmacniające/chamujące
+wartość progowa (teta ?)
+    ||
+    ||
+   -  -         - wartość progowa (wystrzeliwuje po)
+--/    \----    - neuron nieaktywny
+-----------------
+
+PERCEPTRON
+Model Pitts-McCulloch
+
+  x1 \w1
+      \
+x2 -w2 O ( zi = sum xiwi - całkowite pobudzenie ) f(zi) = yi - funkcja aktywacji --->
+      /
+  x3 /wn
+
+my będziemy używać tylko funkcję aktywacji skokową
+zapis wektorowy
+
+x = [x1 ... xn] ^t
+wi = [wi ... wi?] ^t
+
+całk pob zi = [x]*[wi]
+* - iloczyn skalarny
+
+wixi > teta - na wyj.wart = 1
+
+sieć determinowana jest przez funkcję aktywacji neuronów
+sposób połączenia neuronów i reguły uczenia
+
+percepton prosty -> funkcja skokowa jako funkcja aktywacji, przykłady:
+- logika unipolarna (0/1)
+- logika bipolarna (-1/1)
+
+dodatkowe wejście x0 = 1 (bias, zastępuje próg teta)
+
+x0w0 + x1w1 + ... + xnwn > 0 (zero)
+uczenie nadzorowane
+[x]i - wektor wejścia
+yi ^d - pożądane wyjście
+
+{ <[x]1, y1^d>, <[x]2, y2^d>, ..., <[x]i, yi^d> }
+zbiór uczący
+
+zmiana wag:
+wi new = wi old + delta wi (przyrost zmiany wagi)
+delta wi = alfa * xi (y^d - y)
+błąd = (y^d - y)
+
+epoka - przejście przez cały wzór uczący (+ przekorygowanie wagi)
+
+przy dwuch wejściach -> znajdywanie prostej
+x0w0 + x1w1 + x2w2 = 0, gdzie x0 = 1
+czyli odp to półpłaszczyzna po jednej stronie prostej
+- rozwiązywanie problemów separowanych linowo
+
+XOR - nie da się rozwiązać linowo
+
+
+ADALINE
+
+  x1 \w1
+      \
+x2 -w2 O (z sum) - > f.bipolarna
+      /
+  x3 /wn
+
+- reguła uczenia LMS (least mean square)
+- uczenie nadzorowane
+{ <[x]1d1>, <[x]2d2>, ..., <[x]LdL> } - zbiór danych
+
+- minimalizowanie błędu (podejście gradientowe)
+
+epsilon k ^2 = (dk - [w]^t[x]k)^2     , gdzie [w]^t[x]k - liczba rzeczywista
+<epsilon k ^2> = 1/L * sum epsilon k ^2
+L - l. wszystkich zbiorów
+
+wykres diff w - płaszczyzna w przestrzeni (poruszamy sie przeciwnie do gradientu)
+w(t + 1) = w(t) + alfa * delta w(t)      (alfa - współczynnik uczenia)
+w(t + 1) = w(t) - alfa * epsilon k( w(t))
+różniczka epsilon k ^2 = -2 epsilon (t) * xk       liczenie gradientu
+
+w(t+1) = w(t) + alfa * epsilon(t) * xk
+
+klasyfikacja -> cały model
+bez f.b. -> ?
+
+
+
+
+
+
