@@ -52,6 +52,16 @@ def softmax(x):
     return np.exp(x) / np.sum(np.exp(x), axis=0)
 
 
+def negative_log_likelyhood(y, d):
+    return -np.log(y) * d
+
+
+def get_d_matrix(numb, size):
+    d = np.zeros((size, 1))
+    d[numb, 0] = 1
+    return d
+
+
 """
 X_train: (60000, 28, 28)
 Y_train: (60000,)
@@ -61,8 +71,9 @@ Y_test:  (10000,)
 
 
 class MLP:
-    def __init__(self, neuron_counts=[10, 20], activation_fun=sigmoid):
+    def __init__(self, neuron_counts=[10, 20], activation_fun=sigmoid, fun_derivative=sigmoid_derivative):
         self.activation_fun = activation_fun
+        self.activation_fun_derivative = fun_derivative
 
         (train_X, train_y), (test_X, test_y) = mnist.load_data()
         train_X = train_X.reshape((train_X.shape[0], -1))
