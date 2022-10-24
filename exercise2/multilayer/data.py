@@ -56,9 +56,10 @@ def negative_log_likelyhood(y, d):
     return -np.log(y) * d
 
 
-def get_d_matrix(numb, size):
-    d = np.zeros((size, 1))
-    d[numb, 0] = 1
+def get_d_matrix(y):
+    d = np.zeros((10, y.shape[0]))
+    for i in range(d.shape[1]):
+        d[int(y[i][0])][i] = 1
     return d
 
 
@@ -89,36 +90,62 @@ class MLP:
     def __str__(self):
         neurons = "            ".join(str(x) for x in self.neuron_counts)
         weights = "      ".join(str(x.shape) for x in self.all_weights)
-        bs = "       ".join(str(x.shape) for x in self.all_bs)
+        bs = "    ".join(str(x.shape) for x in self.all_bs)
         return f'Neuron counts: {neurons}\n' \
                f'Weights:           {weights}\n' \
-               f'Bs:                 {bs}'
+               f'Bs:               {bs}'
 
     def get_weights_matrix_shape(self, first_inx):
         return [self.neuron_counts[first_inx + 1], self.neuron_counts[first_inx]]
 
     def get_a_matrix_shape(self, inx):
-        return [self.neuron_counts[inx], 1]
+        return [self.neuron_counts[inx], 60000]
 
     def get_b_matrix_shape(self, first_inx):
-        return [self.neuron_counts[first_inx + 1], 1]
+        return [self.neuron_counts[first_inx + 1], 60000]
 
     def count_one_step(self):
         f = self.activation_fun
-        for i in range(self.train_X.shape[0]):
-            # for i in range(1):
-            x = self.train_X[i, :].reshape((-1, 1))
-            a_all = [x]
-            z_all = []
-            for j in range(len(self.neuron_counts) - 1):
-                W = self.all_weights[j]
-                b = self.all_bs[j]
-                z = W @ a_all[j] + b
-                z_all.append(z)
-                a = f(z)
-                a_all.append(a)
-            y = softmax(a_all[-1])
-            # print(self.train_y[i][0], list(y.T[0]))
+        f_prim = self.activation_fun_derivative
+        x = self.train_X.T
+        # x = np.zeros((60000, 28 * 28)).T
+        # self.train_y = np.zeros((60000, 1))
+        a_all = [x]
+        z_all = []
+
+        for j in range(len(self.neuron_counts) - 1):
+            W = self.all_weights[j]
+            b = self.all_bs[j]
+            z = W @ a_all[j] + b
+            z_all.append(z)
+            a = f(z)
+            a_all.append(a)
+        y = softmax(a_all[-1])
+        d = get_d_matrix(self.train_y)
+        err = y - d
+        err_all = [err]
+        # print(self.neuron_counts)
+        # print(err.shape)
+
+        for j in range(len(self.neuron_counts) - 1 - 1, 1, -1):
+            # print(j)
+            W = self.all_weights[j]
+            err = err_all[0]
+            z = z_all[j - 1]
+            # print(W.T.shape, err.shape, f_prim(z).shape)
+            new_err = (W.T @ err) * f_prim(z)
+            err_all.insert(0, new_err)
+
+        for j in range(len(self.neuron_counts) - 1):
+            W = self.all_weights[j]
+            a = a_all[j]
+            b = self.all_bs[j]
+            # print(W.shape, a.shape, b.shape, a.shape)
+            delta_w = -f_prim(W @ a + b) @ a.T
+            delta_b = -f_prim(W @ a + b)
+            self.all_weights[j] += delta_w
+            self.all_bs[j] += delta_b
+        # print(self.train_y[i][0], list(y.T[0]))
 
 
 def get_random(shape):
@@ -129,12 +156,15 @@ def get_random(shape):
 def main():
     mlp = MLP()
     print(mlp)
+    for i in range(len(mlp.all_weights)):
+        print("W", mlp.all_weights[i].shape)
+        print("a", mlp.get_a_matrix_shape(i))
+        print("b", mlp.all_bs[i].shape)
+        print()
+
     mlp.count_one_step()
-    # for i in range(len(mlp.all_weights)):
-    #     print("W", mlp.all_weights[i].shape)
-    #     print("a", mlp.get_a_matrix_shape(i))
-    #     print("b", mlp.all_bs[i].shape)
-    #     print()
+    # print(np.array([[0], [7]]).shape)
+    # print(get_d_matrix(np.array([[0], [7]])))
 
 
 if __name__ == '__main__':
