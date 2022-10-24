@@ -20,15 +20,31 @@ def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
 
+def sigmoid_derivative(x):
+    return sigmoid(1 - sigmoid(x))
+
+
 @np.vectorize
 def tanh(x):
     return 2 / (1 + math.exp(-2 * x)) - 1
+
+
+def tanh_derivative(x):
+    return 1 - (tanh(x) ^ 2)
 
 
 @np.vectorize
 def relu(x):
     if x >= 0:
         return x
+    return 0
+
+
+def relu_derivative(x):
+    if x > 0:
+        return 1
+    if x == 0:
+        return 0.5
     return 0
 
 
@@ -59,6 +75,14 @@ class MLP:
         self.all_weights = [get_random(self.get_weights_matrix_shape(i)) for i in range(len(self.neuron_counts) - 1)]
         self.all_bs = [get_random(self.get_b_matrix_shape(i)) for i in range(len(self.neuron_counts) - 1)]
 
+    def __str__(self):
+        neurons = "            ".join(str(x) for x in self.neuron_counts)
+        weights = "      ".join(str(x.shape) for x in self.all_weights)
+        bs = "       ".join(str(x.shape) for x in self.all_bs)
+        return f'Neuron counts: {neurons}\n' \
+               f'Weights:           {weights}\n' \
+               f'Bs:                 {bs}'
+
     def get_weights_matrix_shape(self, first_inx):
         return [self.neuron_counts[first_inx + 1], self.neuron_counts[first_inx]]
 
@@ -73,13 +97,16 @@ class MLP:
         for i in range(self.train_X.shape[0]):
             # for i in range(1):
             x = self.train_X[i, :].reshape((-1, 1))
-            a = [x]
+            a_all = [x]
+            z_all = []
             for j in range(len(self.neuron_counts) - 1):
                 W = self.all_weights[j]
                 b = self.all_bs[j]
-                z = W @ a[j] + b
-                a.append(f(z))
-            y = softmax(a[-1])
+                z = W @ a_all[j] + b
+                z_all.append(z)
+                a = f(z)
+                a_all.append(a)
+            y = softmax(a_all[-1])
             # print(self.train_y[i][0], list(y.T[0]))
 
 
@@ -90,6 +117,7 @@ def get_random(shape):
 
 def main():
     mlp = MLP()
+    print(mlp)
     mlp.count_one_step()
     # for i in range(len(mlp.all_weights)):
     #     print("W", mlp.all_weights[i].shape)
