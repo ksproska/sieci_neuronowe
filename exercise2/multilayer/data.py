@@ -71,14 +71,16 @@ class MLP:
     def count_one_step(self):
         f = self.activation_fun
         for i in range(self.train_X.shape[0]):
-            x = self.train_X[i, :]
-            a = x
-            for j in range(len(self.neuron_counts) - 1 - 1):
+            # for i in range(1):
+            x = self.train_X[i, :].reshape((-1, 1))
+            a = [x]
+            for j in range(len(self.neuron_counts) - 1):
                 W = self.all_weights[j]
                 b = self.all_bs[j]
-                z = W @ a + b
-                a = f(z)
-            y = softmax(a)
+                z = W @ a[j] + b
+                a.append(f(z))
+            y = softmax(a[-1])
+            # print(self.train_y[i][0], list(y.T[0]))
 
 
 def get_random(shape):
