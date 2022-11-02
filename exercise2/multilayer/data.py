@@ -8,6 +8,8 @@ inicjalizowane z rozkładu normalnego ze zmiennym odchyleniem standardowym),
 f) Zmiany liczby neuronów w warstwach ukrytych,
 g) przerwania uczenia i ponownego rozpoczęcia nauki od poprzednich wartości wag.
 """
+import math
+import random
 
 import numpy as np
 # from keras.datasets import mnist
@@ -40,7 +42,7 @@ Y_test:  (10000,)
 
 
 class MLP:
-    def __init__(self, neuron_counts=[10, 5], activation_fun=sigmoid, fun_derivative=sigmoid_derivative):
+    def __init__(self, neurons_in_hidden_layers=[10, 5], activation_fun=sigmoid, fun_derivative=sigmoid_derivative):
         self.activation_fun = activation_fun
         self.activation_fun_derivative = fun_derivative
 
@@ -52,23 +54,23 @@ class MLP:
         # (self.train_X, self.train_y), (self.test_X, self.test_y) = (train_X, train_y), (test_X, test_y)
         (self.train_X, self.train_y), (self.test_X, self.test_y) = (x_train, d_train), (x_test, d_test)
 
-        self.neuron_counts = [self.train_X.shape[1]] + neuron_counts + [2]
-        self.all_weights = [get_random(self.get_weights_matrix_shape(i)) for i in range(len(self.neuron_counts) - 1)]
-        self.all_bs = [get_random(self.get_b_matrix_shape(i)) for i in range(len(self.neuron_counts) - 1)]
+        self.neurons_in_layers = [self.train_X.shape[1]] + neurons_in_hidden_layers + [2]
+        self.all_weights = [np.random.randn(*self.get_weights_matrix_shape(i)) for i in range(len(self.neurons_in_layers) - 1)]
+        self.all_bs = [random.random() for i in range(len(self.neurons_in_layers) - 1)]
 
     def __str__(self):
-        neurons = "            ".join(str(x) for x in self.neuron_counts)
+        neurons = "            ".join(str(x) for x in self.neurons_in_layers)
         weights = "      ".join(str(x.shape) for x in self.all_weights)
-        xs = "   ".join(str(self.get_a_matrix_shape(i)) for i in range(len(self.neuron_counts) - 1))
+        xs = "   ".join(str(self.get_a_matrix_shape(i)) for i in range(len(self.neurons_in_layers) - 1))
         return f'Neuron counts: {neurons}\n' \
                f'Weights:           {weights}\n' \
                f'Xs:               {xs}'
 
     def get_weights_matrix_shape(self, first_inx):
-        return [self.neuron_counts[first_inx + 1], self.neuron_counts[first_inx]]
+        return [self.neurons_in_layers[first_inx + 1], self.neurons_in_layers[first_inx]]
 
     def get_a_matrix_shape(self, inx):
-        return [self.neuron_counts[inx], self.train_X.shape[0]]
+        return [self.neurons_in_layers[inx], self.train_X.shape[0]]
 
     def get_b_matrix_shape(self, first_inx):
         return [1, self.train_X.shape[0]]
@@ -80,36 +82,33 @@ class MLP:
         a_all = [x]
         z_all = []
 
-        for j in range(len(self.neuron_counts) - 1):
-            W = self.all_weights[j]
+        for j in range(len(self.neurons_in_layers) - 1):
+            w = self.all_weights[j]
             b = self.all_bs[j]
-            z = W @ a_all[j] + b
+            z = w @ a_all[j] + b
             z_all.append(z)
             a = f(z)
             a_all.append(a)
-        y = softmax(a_all[-1])
+        a_all[-1] = softmax(z_all[-1])
+        y = a_all[-1]
         d = get_d_matrix(self.train_y, y.shape[0])
-        # print(d)
-        err = d - y  # y - d ?
-        err_all = [err]
+        dz = y - d
+        dz_all = [dz]
 
-        for j in range(len(self.neuron_counts) - 1 - 1, 1, -1):
-            W = self.all_weights[j]
-            err = err_all[0]
-            z = z_all[j - 1]
-            new_err = (W.T @ err) * f_prim(z)
-            err_all.insert(0, new_err)
+        for j in range(len(self.neurons_in_layers) - 2, 0, -1):
+            prev_w = self.all_weights[j]
+            prev_dz = dz_all[-1]
+            dz = (prev_w.T @ prev_dz) * f_prim(z_all[j - 1])
+            dz_all.append(dz)
 
-        for j in range(len(self.neuron_counts) - 1):
-            W = self.all_weights[j]
+        dz_all = dz_all[::-1]
+        for j in range(len(self.neurons_in_layers) - 1):
             a = a_all[j]
-            b = self.all_bs[j]
-            z = z_all[j]
-            # print("z", z.shape, "a", a.shape)
-            delta_w = z @ a.T / z.shape[1]
-            delta_b = np.sum(z) / z.shape[1]
-            self.all_weights[j] -= delta_w * 0.01
-            self.all_bs[j] -= delta_b * 0.01
+            dz = dz_all[j]
+            dw = dz @ a.T / 60000
+            db = np.sum(dz, axis=1, keepdims=True) / 60000
+            self.all_weights[j] = self.all_weights[j] - dw * 0.2
+            self.all_bs[j] = self.all_bs[j] - db * 0.2
 
         return y
 
@@ -142,13 +141,13 @@ def main():
     for i in range(len(mlp.all_weights)):
         print("W", mlp.all_weights[i].shape)
         print("a", mlp.get_a_matrix_shape(i))
-        print("b", mlp.all_bs[i].shape)
+        # print("b", mlp.all_bs[i].shape)
         print()
 
-    for i in range(300):
+    for i in range(1500):
         y = mlp.count_one_step()
-        if i % 10 == 0:
-            print(i, mlp.test_y[:4].T[0], "\n", y.T[:4].T)
+        if i % 100 == 0:
+            print(i, mlp.test_y[:10].T[0], "\n", y.T[:10].T)
         # print(mlp.all_weights[0].T)c
     # print(np.array([[0], [7]]).shape)
     # print(get_d_matrix(np.array([[0], [7]])))
