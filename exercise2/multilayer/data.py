@@ -11,11 +11,14 @@ g) przerwania uczenia i ponownego rozpoczęcia nauki od poprzednich wartości wa
 import math
 import random
 
+import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
+
 # from keras.datasets import mnist
 from temp import x_train, d_train, x_test, d_test
 
-from activation_functions import sigmoid, sigmoid_derivative
+from activation_functions import sigmoid, sigmoid_derivative, tanh, tanh_derivative, relu, relu_derivative
 
 
 def softmax(x):
@@ -42,7 +45,7 @@ Y_test:  (10000,)
 
 
 class MLP:
-    def __init__(self, neurons_in_hidden_layers=[10, 5], activation_fun=sigmoid, fun_derivative=sigmoid_derivative):
+    def __init__(self, neurons_in_hidden_layers=[10, 5], activation_fun=relu, fun_derivative=relu_derivative):
         self.activation_fun = activation_fun
         self.activation_fun_derivative = fun_derivative
 
@@ -57,6 +60,7 @@ class MLP:
         self.neurons_in_layers = [self.train_X.shape[1]] + neurons_in_hidden_layers + [2]
         self.all_weights = [np.random.randn(*self.get_weights_matrix_shape(i)) for i in range(len(self.neurons_in_layers) - 1)]
         self.all_bs = [random.random() for i in range(len(self.neurons_in_layers) - 1)]
+        self.d = get_d_matrix(self.train_y, 2)
 
     def __str__(self):
         neurons = "            ".join(str(x) for x in self.neurons_in_layers)
@@ -91,8 +95,8 @@ class MLP:
             a_all.append(a)
         a_all[-1] = softmax(z_all[-1])
         y = a_all[-1]
-        d = get_d_matrix(self.train_y, y.shape[0])
-        dz = y - d
+
+        dz = y - self.d
         dz_all = [dz]
 
         for j in range(len(self.neurons_in_layers) - 2, 0, -1):
@@ -107,50 +111,36 @@ class MLP:
             dz = dz_all[j]
             dw = dz @ a.T / 60000
             db = np.sum(dz, axis=1, keepdims=True) / 60000
-            self.all_weights[j] = self.all_weights[j] - dw * 0.2
-            self.all_bs[j] = self.all_bs[j] - db * 0.2
+            self.all_weights[j] = self.all_weights[j] - dw * 0.07
+            self.all_bs[j] = self.all_bs[j] - db * 0.07
 
         return y
 
-
-#     def get_d_for(self, x):
-#         f = self.activation_fun
-#         x = x.T
-#         a_all = [x]
-#         z_all = []
-
-#         for j in range(len(self.neuron_counts) - 1):
-#             W = self.all_weights[j]
-#             b = self.all_bs[j]
-#             z = W @ a_all[j] + b
-#             z_all.append(z)
-#             a = f(z)
-#             a_all.append(a)
-#         return softmax(a_all[-1])
-
-
-def get_random(shape):
-    rand_matrix = np.random.rand(*shape)
-    return rand_matrix
+    def get_predictions(self, y):
+        y = np.round(y)
+        return np.mean(y == self.d)
 
 
 def main():
     np.set_printoptions(precision=3, suppress=True)
     mlp = MLP()
     print(mlp)
-    for i in range(len(mlp.all_weights)):
-        print("W", mlp.all_weights[i].shape)
-        print("a", mlp.get_a_matrix_shape(i))
-        # print("b", mlp.all_bs[i].shape)
-        print()
 
-    for i in range(1500):
+    predictions = []
+    iterations = 0
+    tqdmobj = tqdm(range(300), colour="blue")
+    for i in tqdmobj:
+        iterations = i
         y = mlp.count_one_step()
-        if i % 100 == 0:
-            print(i, mlp.test_y[:10].T[0], "\n", y.T[:10].T)
-        # print(mlp.all_weights[0].T)c
-    # print(np.array([[0], [7]]).shape)
-    # print(get_d_matrix(np.array([[0], [7]])))
+        prediction = mlp.get_predictions(y)
+        tqdmobj.set_postfix_str(f"accuracy: {np.round(prediction*100, 2)}%", refresh=True)
+        predictions.append(prediction)
+        if len(predictions) > 2 and predictions[-2] > predictions[-1] or predictions[-1] == 1.0:
+            break
+
+    plt.title(f"{mlp.activation_fun.__name__} iterations {iterations + 1} best {predictions[-1]}")
+    plt.plot(predictions)
+    plt.show()
 
 
 if __name__ == '__main__':

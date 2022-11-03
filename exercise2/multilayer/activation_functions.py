@@ -11,22 +11,19 @@ def sigmoid_derivative(x):
     return sigmoid(1 - sigmoid(x))
 
 
-@np.vectorize
 def tanh(x):
-    return 2 / (1 + math.exp(-2 * x)) - 1
+    return np.vectorize(lambda v: 2 / (1 + math.exp(-2 * v)) - 1)(x)
 
 
 def tanh_derivative(x):
-    return 1 - (tanh(x) ^ 2)
+    return 1 - (tanh(x) ** 2)
+
+
+def relu(x):
+    return np.vectorize(lambda v: max(v, 0))(x)
 
 
 @np.vectorize
-def relu(x):
-    if x >= 0:
-        return x
-    return 0
-
-
 def relu_derivative(x):
     if x > 0:
         return 1
