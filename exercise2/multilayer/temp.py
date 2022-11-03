@@ -46,4 +46,4 @@ x_all = x_all + get_random(x_all.shape)
 
 x_train, x_test = x_all[:, :60000].T, x_all[:, 60000:].T
 d_train, d_test = d_all[:, :60000].T, d_all[:, 60000:].T
-print(x_train.shape, d_train.shape)
+# print(x_train.shape, d_train.shape)

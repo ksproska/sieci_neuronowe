@@ -8,16 +8,11 @@ inicjalizowane z rozkładu normalnego ze zmiennym odchyleniem standardowym),
 f) Zmiany liczby neuronów w warstwach ukrytych,
 g) przerwania uczenia i ponownego rozpoczęcia nauki od poprzednich wartości wag.
 """
-import math
 import random
-
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
-
-# from keras.datasets import mnist
-from temp import x_train, d_train, x_test, d_test
-
+from keras.datasets import mnist
 from activation_functions import sigmoid, sigmoid_derivative, tanh, tanh_derivative, relu, relu_derivative
 
 
@@ -45,22 +40,28 @@ Y_test:  (10000,)
 
 
 class MLP:
-    def __init__(self, neurons_in_hidden_layers=[10, 5], activation_fun=relu, fun_derivative=relu_derivative):
+    def __init__(self, learning_rate, neurons_in_hidden_layers, activation_fun):
         self.activation_fun = activation_fun
-        self.activation_fun_derivative = fun_derivative
+        self.activation_fun_derivative = {
+            relu: relu_derivative,
+            sigmoid: sigmoid_derivative,
+            tanh: tanh_derivative
+        }[activation_fun]
+        self.learning_rate = learning_rate
 
-        # (train_X, train_y), (test_X, test_y) = mnist.load_data()
-        # train_X = train_X.reshape((train_X.shape[0], -1))
-        # train_y = train_y.reshape((train_y.shape[0], -1))
-        # test_X = test_X.reshape((test_X.shape[0], -1))
-        # test_y = test_y.reshape((test_y.shape[0], -1))
-        # (self.train_X, self.train_y), (self.test_X, self.test_y) = (train_X, train_y), (test_X, test_y)
-        (self.train_X, self.train_y), (self.test_X, self.test_y) = (x_train, d_train), (x_test, d_test)
+        (train_X, train_y), (test_X, test_y) = mnist.load_data()
+        train_X = train_X.reshape((train_X.shape[0], -1))
+        train_y = train_y.reshape((train_y.shape[0], -1))
+        test_X = test_X.reshape((test_X.shape[0], -1))
+        test_y = test_y.reshape((test_y.shape[0], -1))
+        (self.train_X, self.train_y), (self.test_X, self.test_y) = (train_X/255, train_y), (test_X/255, test_y)
+        # (self.train_X, self.train_y), (self.test_X, self.test_y) = (x_train, d_train), (x_test, d_test)
 
-        self.neurons_in_layers = [self.train_X.shape[1]] + neurons_in_hidden_layers + [2]
+        self.neurons_in_layers = [self.train_X.shape[1]] + neurons_in_hidden_layers + [10]
         self.all_weights = [np.random.randn(*self.get_weights_matrix_shape(i)) for i in range(len(self.neurons_in_layers) - 1)]
         self.all_bs = [random.random() for i in range(len(self.neurons_in_layers) - 1)]
-        self.d = get_d_matrix(self.train_y, 2)
+        self.d = get_d_matrix(self.train_y, 10)
+        self.d_test = get_d_matrix(self.test_y, 10)
 
     def __str__(self):
         neurons = "            ".join(str(x) for x in self.neurons_in_layers)
@@ -111,36 +112,62 @@ class MLP:
             dz = dz_all[j]
             dw = dz @ a.T / 60000
             db = np.sum(dz, axis=1, keepdims=True) / 60000
-            self.all_weights[j] = self.all_weights[j] - dw * 0.07
-            self.all_bs[j] = self.all_bs[j] - db * 0.07
+            self.all_weights[j] = self.all_weights[j] - dw * self.learning_rate
+            self.all_bs[j] = self.all_bs[j] - db * self.learning_rate
 
         return y
 
-    def get_predictions(self, y):
-        y = np.round(y)
-        return np.mean(y == self.d)
+    def get_predictions(self):
+        f = self.activation_fun
+        x = self.test_X.T
+        a_all = [x]
+        z_all = []
+
+        for j in range(len(self.neurons_in_layers) - 1):
+            w = self.all_weights[j]
+            b = self.all_bs[j]
+            z = w @ a_all[j] + b
+            z_all.append(z)
+            a = f(z)
+            a_all.append(a)
+        a_all[-1] = softmax(z_all[-1])
+        y = a_all[-1]
+
+        a = np.zeros(y.shape)
+        for row in range(y.shape[1]):
+            m = np.argmax(y[:, row])
+            a[m][row] = 1
+        diff = a - self.d_test
+        diff = np.abs(diff).astype(int)
+        count = np.count_nonzero(diff) / 2
+        return (y.shape[1] - count) / y.shape[1]
 
 
 def main():
     np.set_printoptions(precision=3, suppress=True)
-    mlp = MLP()
-    print(mlp)
+    mlp = MLP(1.2, [25], tanh)
 
-    predictions = []
+    predictions = [0]
     iterations = 0
-    tqdmobj = tqdm(range(300), colour="blue")
-    for i in tqdmobj:
-        iterations = i
-        y = mlp.count_one_step()
-        prediction = mlp.get_predictions(y)
-        tqdmobj.set_postfix_str(f"accuracy: {np.round(prediction*100, 2)}%", refresh=True)
-        predictions.append(prediction)
-        if len(predictions) > 2 and predictions[-2] > predictions[-1] or predictions[-1] == 1.0:
-            break
+    while True:
+        tqdmobj = tqdm(range(25))
+        for i in tqdmobj:
+            iterations += 1
+            mlp.count_one_step()
+            prediction = mlp.get_predictions()
+            predictions.append(prediction)
+            accuracy = np.round(prediction * 100, 2)
+            best = np.round(np.max(predictions) * 100, 2)
+            if best == accuracy:
+                best = str("-||-")
+            tqdmobj.set_postfix_str(
+                f"accuracy: {accuracy}%, best: {best}%",
+                refresh=True)
 
-    plt.title(f"{mlp.activation_fun.__name__} iterations {iterations + 1} best {predictions[-1]}")
-    plt.plot(predictions)
-    plt.show()
+        plt.title(f"{mlp.activation_fun.__name__} - neurons in layers {mlp.neurons_in_layers}\nlearning rate {mlp.learning_rate} - iterations {iterations} - best {np.round(np.max(predictions) * 100, 2)}%")
+        plt.plot(predictions)
+        plt.ylim(0, 1)
+        plt.show()
 
 
 if __name__ == '__main__':

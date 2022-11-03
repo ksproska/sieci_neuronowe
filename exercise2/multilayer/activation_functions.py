@@ -12,7 +12,7 @@ def sigmoid_derivative(x):
 
 
 def tanh(x):
-    return np.vectorize(lambda v: 2 / (1 + math.exp(-2 * v)) - 1)(x)
+    return 2 / (1 + np.exp(-2 * x)) - 1
 
 
 def tanh_derivative(x):
