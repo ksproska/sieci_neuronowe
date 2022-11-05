@@ -14,3 +14,9 @@ def get_d_matrix(y, dim):
     for i in range(d.shape[1]):
         d[int(y[i][0])][i] = 1
     return d
+
+
+def calculate_loss(Y, D):
+    diff = (D - Y) ** 2
+    summed = np.sum(diff, axis=0) / 2
+    return np.mean(summed)

@@ -15,8 +15,9 @@ colors = 'bgrcmyk'
 
 
 class MLP:
-    def __init__(self, learning_rate, neurons_in_hidden_layers, activation_fun, output_classes_numb=10):
+    def __init__(self, learning_rate, neurons_in_hidden_layers, activation_fun, w_range, output_classes_numb=10):
         self.iterations = 0
+        self.w_range = w_range
         self.activation_fun = activation_fun
         self.activation_fun_derivative = {
             relu: relu_derivative,
@@ -35,8 +36,8 @@ class MLP:
         self.neurons_in_layers = [self.train_X.shape[1]] + neurons_in_hidden_layers + [output_classes_numb]
         self.all_weights = [np.random.randn(*self.get_weights_matrix_shape(i)) for i in
                             range(len(self.neurons_in_layers) - 1)]
-        self.all_bs = [random.random() for i in range(len(self.neurons_in_layers) - 1)]
-        self.d = get_d_matrix(self.train_y, output_classes_numb)
+        self.all_bs = [(random.random() * 2 - 1) * w_range for _ in range(len(self.neurons_in_layers) - 1)]
+        self.d_train = get_d_matrix(self.train_y, output_classes_numb)
         self.d_test = get_d_matrix(self.test_y, output_classes_numb)
 
     def get_weights_matrix_shape(self, first_inx):
@@ -60,7 +61,7 @@ class MLP:
         a_all[-1] = softmax(z_all[-1])
         y = a_all[-1]
 
-        dz = y - self.d
+        dz = y - self.d_train
         dz_all = [dz]
 
         for j in range(len(self.neurons_in_layers) - 2, 0, -1):
@@ -94,43 +95,61 @@ class MLP:
 
         best = np.argmax(y, axis=0)
         labels = np.argmax(d, axis=0)
-        return np.mean(best == labels)
+        return calculate_loss(y, d), np.mean(best == labels)
 
     def __str__(self):
-        return f"{self.learning_rate} {self.neurons_in_layers[1:-1]} {self.activation_fun.__name__}"
+        return f"{self.learning_rate} {self.neurons_in_layers[1:-1]} {self.activation_fun.__name__} {-self.w_range}:{self.w_range}"
 
 
 def run_simulation(mlps, iterations):
     fig_path = f'plots/fig_{datetime.datetime.now()}.png'
-    for i in iterations:
+    for current, i in enumerate(iterations):
         smart_iterator = tqdm(range(i), colour='BLUE')
-        smart_iterator.set_postfix_str(f'{i}/{len(iterations)}')
+        smart_iterator.set_postfix_str(f'{current}/{len(iterations)}')
         for _ in smart_iterator:
             for mlp in mlps.keys():
-                y_hat = mlp.count_one_step()
-                prediction_train = mlp.get_predictions(mlp.train_X, mlp.d)
-                prediction_test = mlp.get_predictions(mlp.test_X, mlp.d_test)
+                mlp.count_one_step()
+                loss_train, prediction_train = mlp.get_predictions(mlp.train_X, mlp.d_train)
+                loss_test, prediction_test = mlp.get_predictions(mlp.test_X, mlp.d_test)
                 mlps[mlp][0].append(prediction_test)
                 mlps[mlp][1].append(prediction_train)
-        for i, mlp in enumerate(mlps.keys()):
-            plt.plot(mlps[mlp][0], label=str(mlp) + " test", c=colors[i])
-            # plt.plot(mlps[mlp][1], "--", label=str(mlp) + " train", c=colors[i])
+                mlps[mlp][2].append(loss_test)
+                mlps[mlp][3].append(loss_train)
+
+        fig, axis = plt.subplots(1, 2)
+        fig.set_size_inches(10, 5)
+        for j, mlp in enumerate(mlps.keys()):
+            plt.sca(axis[0])
+            plt.plot(mlps[mlp][0], label=str(mlp) + " test", c=colors[j])
+            # plt.plot(mlps[mlp][1], "--", label=str(mlp) + " train", c=colors[j])
+            plt.sca(axis[1])
+            plt.plot(mlps[mlp][2], label=str(mlp) + " test", c=colors[j])
+            # plt.plot(mlps[mlp][3], "--", label=str(mlp) + " train", c=colors[j])
+
+        plt.sca(axis[0])
         plt.ylim(0, 1)
         plt.xlabel("iterations")
         plt.ylabel("accuracy")
         plt.legend()
+
+        plt.sca(axis[1])
+        plt.xlabel("iterations")
+        plt.ylabel("accuracy")
+        plt.legend()
+
         plt.savefig(fig_path)
         plt.show()
 
 
 def main():
     mlps = {
-        # MLP(1.3, [5], tanh): [[], []],
-        # MLP(1.3, [10], tanh): [[], []],
-        MLP(1.3, [70], tanh): [[], []],
-        # MLP(1.3, [150], tanh): [[], []],
+        MLP(20.0, [], tanh, 0.01): [[], [], [], []],
+        # MLP(1.3, [70], tanh, 0.01): [[], [], [], []],
+        # MLP(1.3, [70], tanh, 0.1): [[], [], [], []],
+        # MLP(1.3, [70], tanh, 10): [[], [], [], []],
+        # MLP(1.3, [70], tanh, 20): [[], [], [], []],
     }
-    iterations = [3, 7, 5, 5, 5, 10, 10, 10, 10, 10]
+    iterations = [20] * 30
     run_simulation(mlps, iterations)
 
 
