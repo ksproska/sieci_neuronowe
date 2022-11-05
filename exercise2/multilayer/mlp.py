@@ -1,4 +1,5 @@
 import datetime
+import math
 import random
 import time
 
@@ -15,8 +16,9 @@ colors = 'bgrcmyk'
 
 
 class MLP:
-    def __init__(self, learning_rate, neurons_in_hidden_layers, activation_fun, w_range, output_classes_numb=10):
+    def __init__(self, learning_rate, neurons_in_hidden_layers, activation_fun, w_range, batch_size=64, output_classes_numb=10):
         self.iterations = 0
+        self.batch_size = batch_size
         self.w_range = w_range
         self.activation_fun = activation_fun
         self.activation_fun_derivative = {
@@ -43,41 +45,49 @@ class MLP:
     def get_weights_matrix_shape(self, first_inx):
         return [self.neurons_in_layers[first_inx + 1], self.neurons_in_layers[first_inx]]
 
-    def count_one_step(self):
+    def train_one_epoch(self):
         self.iterations += 1
         f = self.activation_fun
         f_prim = self.activation_fun_derivative
-        x = self.train_X.T
-        a_all = [x]
-        z_all = []
+        all_x = self.train_X.T
+        all_d = self.d_train
+        numb_of_samples = all_x.shape[1]
+        batch_count = np.ceil(numb_of_samples/self.batch_size)
 
-        for j in range(len(self.neurons_in_layers) - 1):
-            w = self.all_weights[j]
-            b = self.all_bs[j]
-            z = w @ a_all[j] + b
-            z_all.append(z)
-            a = f(z)
-            a_all.append(a)
-        a_all[-1] = softmax(z_all[-1])
-        y = a_all[-1]
+        for batch_numb in range(int(batch_count)):
+            x = all_x[:, batch_numb*self.batch_size:min((batch_numb+1)*self.batch_size, numb_of_samples)]
+            d = all_d[:, batch_numb*self.batch_size:min((batch_numb+1)*self.batch_size, numb_of_samples)]
 
-        dz = y - self.d_train
-        dz_all = [dz]
+            a_all = [x]
+            z_all = []
 
-        for j in range(len(self.neurons_in_layers) - 2, 0, -1):
-            prev_w = self.all_weights[j]
-            prev_dz = dz_all[-1]
-            dz = (prev_w.T @ prev_dz) * f_prim(z_all[j - 1])
-            dz_all.append(dz)
+            for j in range(len(self.neurons_in_layers) - 1):
+                w = self.all_weights[j]
+                b = self.all_bs[j]
+                z = w @ a_all[j] + b
+                z_all.append(z)
+                a = f(z)
+                a_all.append(a)
+            a_all[-1] = softmax(z_all[-1])
+            y = a_all[-1]
 
-        dz_all = dz_all[::-1]
-        for j in range(len(self.neurons_in_layers) - 1):
-            a = a_all[j]
-            dz = dz_all[j]
-            dw = dz @ a.T / x.shape[1]
-            db = np.sum(dz, axis=1, keepdims=True) / x.shape[1]
-            self.all_weights[j] = self.all_weights[j] - dw * self.learning_rate
-            self.all_bs[j] = self.all_bs[j] - db * self.learning_rate
+            dz = y - d
+            dz_all = [dz]
+
+            for j in range(len(self.neurons_in_layers) - 2, 0, -1):
+                prev_w = self.all_weights[j]
+                prev_dz = dz_all[-1]
+                dz = (prev_w.T @ prev_dz) * f_prim(z_all[j - 1])
+                dz_all.append(dz)
+
+            dz_all = dz_all[::-1]
+            for j in range(len(self.neurons_in_layers) - 1):
+                a = a_all[j]
+                dz = dz_all[j]
+                dw = dz @ a.T / numb_of_samples
+                db = np.sum(dz, axis=1, keepdims=True) / numb_of_samples
+                self.all_weights[j] = self.all_weights[j] - dw * self.learning_rate
+                self.all_bs[j] = self.all_bs[j] - db * self.learning_rate
 
         return y
 
@@ -98,7 +108,8 @@ class MLP:
         return calculate_loss(y, d), np.mean(best == labels)
 
     def __str__(self):
-        return f"{self.learning_rate} {self.neurons_in_layers[1:-1]} {self.activation_fun.__name__} {-self.w_range}:{self.w_range}"
+        return f"{self.learning_rate} {self.neurons_in_layers[1:-1]} {self.activation_fun.__name__} " \
+               f"{-self.w_range}:{self.w_range} {self.batch_size}"
 
 
 def run_simulation(mlps, iterations):
@@ -108,7 +119,7 @@ def run_simulation(mlps, iterations):
         smart_iterator.set_postfix_str(f'{current}/{len(iterations)}')
         for _ in smart_iterator:
             for mlp in mlps.keys():
-                mlp.count_one_step()
+                mlp.train_one_epoch()
                 loss_train, prediction_train = mlp.get_predictions(mlp.train_X, mlp.d_train)
                 loss_test, prediction_test = mlp.get_predictions(mlp.test_X, mlp.d_test)
                 mlps[mlp][0].append(prediction_test)
@@ -121,10 +132,10 @@ def run_simulation(mlps, iterations):
         for j, mlp in enumerate(mlps.keys()):
             plt.sca(axis[0])
             plt.plot(mlps[mlp][0], label=str(mlp) + " test", c=colors[j])
-            # plt.plot(mlps[mlp][1], "--", label=str(mlp) + " train", c=colors[j])
+            plt.plot(mlps[mlp][1], "--", label=str(mlp) + " train", c=colors[j])
             plt.sca(axis[1])
             plt.plot(mlps[mlp][2], label=str(mlp) + " test", c=colors[j])
-            # plt.plot(mlps[mlp][3], "--", label=str(mlp) + " train", c=colors[j])
+            plt.plot(mlps[mlp][3], "--", label=str(mlp) + " train", c=colors[j])
 
         plt.sca(axis[0])
         plt.ylim(0, 1)
@@ -143,13 +154,13 @@ def run_simulation(mlps, iterations):
 
 def main():
     mlps = {
-        MLP(20.0, [], tanh, 0.01): [[], [], [], []],
+        MLP(10.0, [150, 100, 50], tanh, 0.01): [[], [], [], []],
         # MLP(1.3, [70], tanh, 0.01): [[], [], [], []],
         # MLP(1.3, [70], tanh, 0.1): [[], [], [], []],
         # MLP(1.3, [70], tanh, 10): [[], [], [], []],
         # MLP(1.3, [70], tanh, 20): [[], [], [], []],
     }
-    iterations = [20] * 30
+    iterations = [5] * 60
     run_simulation(mlps, iterations)
 
 
