@@ -20,3 +20,11 @@ def calculate_loss(Y, D):
     diff = (D - Y) ** 2
     summed = np.sum(diff, axis=0) / 2
     return np.mean(summed)
+
+
+def find_str_diff(s, t):
+    ls_s = [s[i] for i in range(len(s))]
+    ls_t = [t[i] for i in range(len(t))]
+    for elem in ls_s:
+        ls_t.remove(elem)
+    return ls_t[0]

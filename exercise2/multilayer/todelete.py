@@ -1,16 +1,30 @@
 import numpy as np
+import inspect
+
+
+class Foo():
+    def __init__(self):
+        self.a = 1
+
+    def update_params(self, **kwargs):
+        for k, v in kwargs.items():
+            inspect.getmembers(self)[2][1][k] = v
 
 
 def main():
-    labels = np.arange(0, 6)
-    labels[0] = 2
+    f = Foo()
+    print(f.a)
+    # inspect.getmembers(f)[2][1]['a'] = 4
+    print(f.a)
+    f.__dict__['a'] = 4
+    print(f.a)
 
-    print(labels)
-    y_hat = np.diag(np.ones(shape=(6,))) - np.diag(np.random.random(6)/10)
-    print(y_hat)
-    predictions = np.argmax(y_hat, axis=1)
-    print(np.mean(predictions == labels))
+    d1 = {"a": 1, "b": 2, "c":3}
+    d2 = {"a": 2, "b": 2, "c": 2}
 
+    for key in d1:
+        if not d1[key] == d2[key]:
+            print(d1[key], d2[key])
 
 
 
