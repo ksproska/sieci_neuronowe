@@ -139,13 +139,17 @@ class MLP:
 
 def run_simulation(mlps, iterations, show_train=False):
     figure_title = ""
-    for mlp in mlps:
-        for mlp2 in mlps:
-            if mlp != mlp2:
-                for param in mlp.show_dict:
-                    if mlp.standard_dict[param] == mlp2.standard_dict[param]:
-                        mlp.show_dict[param] = ""
-                        mlp2.show_dict[param] = ""
+    if len(list(mlps.keys())) == 1:
+        for param in list(mlps.keys())[0].show_dict:
+            list(mlps.keys())[0].show_dict[param] = ""
+    else:
+        for mlp in mlps:
+            for mlp2 in mlps:
+                if mlp != mlp2:
+                    for param in mlp.show_dict:
+                        if mlp.standard_dict[param] == mlp2.standard_dict[param]:
+                            mlp.show_dict[param] = ""
+                            mlp2.show_dict[param] = ""
     for param in list(mlps.keys())[0].show_dict:
         val = list(mlps.keys())[0].show_dict[param]
         if val == "":
@@ -164,11 +168,13 @@ def run_simulation(mlps, iterations, show_train=False):
                 mlps[mlp][1].append(prediction_train)
                 mlps[mlp][2].append(loss_test)
                 mlps[mlp][3].append(loss_train)
+            smart_iterator.set_postfix_str(", ".join([f"{np.round(mlps[x][0][-1] * 100, 2)}%" for x in list(mlps.keys())]))
 
         fig, axis = plt.subplots(1, 2)
-        plt.subplots_adjust(top=0.75)
+        plt.subplots_adjust(top=0.73)
         fig.set_size_inches(11, 6)
         for j, mlp in enumerate(mlps.keys()):
+            print(mlp)
             plt.sca(axis[0])
             plt.plot(mlps[mlp][0], label=str(mlp), c=colors[j])
             if show_train:
@@ -179,16 +185,16 @@ def run_simulation(mlps, iterations, show_train=False):
                 plt.plot(mlps[mlp][3], "--", c=colors[j])
 
         plt.sca(axis[0])
-        plt.title("accuracy - " + figure_title)
+        plt.title("accuracy\n" + figure_title)
         plt.ylim(0, 1)
         plt.xlabel("iterations")
         plt.ylabel("accuracy")
         plt.legend()
 
         plt.sca(axis[1])
-        plt.title("loss - " + figure_title)
+        plt.title("loss\n" + figure_title)
         plt.xlabel("iterations")
-        plt.ylabel("accuracy")
+        plt.ylabel("loss")
         plt.legend()
 
         plt.savefig(fig_path)
@@ -198,7 +204,7 @@ def run_simulation(mlps, iterations, show_train=False):
 def main():
     mlps = {
         MLP(10.0, [150, 100, 50], tanh, 0.01, 64): [[], [], [], []],
-        MLP(5.0, [150, 100, 50], tanh, 0.01, 64): [[], [], [], []],
+        # MLP(5.0, [150, 100, 50], tanh, 0.01, 64): [[], [], [], []],
         # MLP(1.3, [70], tanh, 0.01): [[], [], [], []],
         # MLP(1.3, [70], tanh, 0.1): [[], [], [], []],
         # MLP(1.3, [70], tanh, 10): [[], [], [], []],
