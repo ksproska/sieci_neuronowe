@@ -3,12 +3,15 @@ import random
 import time
 
 import matplotlib.pyplot as plt
+import numpy as np
 from tqdm import tqdm
 from keras.datasets import mnist
 from activation_functions import *
 from utils import *
 
 plt.style.use('ggplot')
+
+colors = 'bgrcmyk'
 
 
 class MLP:
@@ -77,30 +80,21 @@ class MLP:
 
         return y
 
-    def get_predictions(self):
+    def get_predictions(self, x, d):
         f = self.activation_fun
-        x = self.test_X.T
-        a_all = [x]
-        z_all = []
+        a = x.T
+        z = None
 
         for j in range(len(self.neurons_in_layers) - 1):
             w = self.all_weights[j]
             b = self.all_bs[j]
-            z = w @ a_all[j] + b
-            z_all.append(z)
+            z = w @ a + b
             a = f(z)
-            a_all.append(a)
-        a_all[-1] = softmax(z_all[-1])
-        y = a_all[-1]
+        y = softmax(z)
 
-        a = np.zeros(y.shape)
-        for row in range(y.shape[1]):
-            m = np.argmax(y[:, row])
-            a[m][row] = 1
-        diff = a - self.d_test
-        diff = np.abs(diff).astype(int)
-        count = np.count_nonzero(diff) / 2
-        return (y.shape[1] - count) / y.shape[1]
+        best = np.argmax(y, axis=0)
+        labels = np.argmax(d, axis=0)
+        return np.mean(best == labels)
 
     def __str__(self):
         return f"{self.learning_rate} {self.neurons_in_layers[1:-1]} {self.activation_fun.__name__}"
@@ -113,11 +107,14 @@ def run_simulation(mlps, iterations):
         smart_iterator.set_postfix_str(f'{i}/{len(iterations)}')
         for _ in smart_iterator:
             for mlp in mlps.keys():
-                mlp.count_one_step()
-                prediction = mlp.get_predictions()
-                mlps[mlp].append(prediction)
-        for mlp in mlps.keys():
-            plt.plot(mlps[mlp], label=str(mlp))
+                y_hat = mlp.count_one_step()
+                prediction_train = mlp.get_predictions(mlp.train_X, mlp.d)
+                prediction_test = mlp.get_predictions(mlp.test_X, mlp.d_test)
+                mlps[mlp][0].append(prediction_test)
+                mlps[mlp][1].append(prediction_train)
+        for i, mlp in enumerate(mlps.keys()):
+            plt.plot(mlps[mlp][0], label=str(mlp) + " test", c=colors[i])
+            # plt.plot(mlps[mlp][1], "--", label=str(mlp) + " train", c=colors[i])
         plt.ylim(0, 1)
         plt.xlabel("iterations")
         plt.ylabel("accuracy")
@@ -128,12 +125,12 @@ def run_simulation(mlps, iterations):
 
 def main():
     mlps = {
-        MLP(1.3, [5], tanh): [],
-        MLP(1.3, [10], tanh): [],
-        MLP(1.3, [70], tanh): [],
-        MLP(1.3, [150], tanh): [],
+        # MLP(1.3, [5], tanh): [[], []],
+        # MLP(1.3, [10], tanh): [[], []],
+        MLP(1.3, [70], tanh): [[], []],
+        # MLP(1.3, [150], tanh): [[], []],
     }
-    iterations = [10, 5, 5, 5, 10, 10]
+    iterations = [3, 7, 5, 5, 5, 10, 10, 10, 10, 10]
     run_simulation(mlps, iterations)
 
 
