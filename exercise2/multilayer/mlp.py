@@ -137,7 +137,62 @@ class MLP:
         #        f"{-self.w_range}:{self.w_range} {self.batch_size}"
 
 
-def run_simulation(mlps, iterations, show_train=False):
+def run_simulation(mlps, iterations, show_train=False, early_stop=-1):
+    figure_title = get_title_and_set_labels(mlps)
+
+    fig_path = f'plots/fig_{datetime.datetime.now()}.png'
+    for current, i in enumerate(iterations):
+        smart_iterator = tqdm(range(i), colour='BLUE')
+        smart_iterator.set_postfix_str(f'{current}/{len(iterations)}')
+        for _ in smart_iterator:
+            for mlp in mlps.keys():
+                mlp.train_one_epoch()
+                loss_train, prediction_train = mlp.get_predictions(mlp.train_X, mlp.d_train)
+                loss_test, prediction_test = mlp.get_predictions(mlp.test_X, mlp.d_test)
+                mlps[mlp][0].append(prediction_test)
+                mlps[mlp][1].append(prediction_train)
+                mlps[mlp][2].append(loss_test)
+                mlps[mlp][3].append(loss_train)
+            for mlp in mlps.keys():
+                if early_stop != -1 and mlps[mlp][2][-1] - mlps[mlp][3][-1] > early_stop:
+                    show_and_save_graph(fig_path, figure_title, mlps, show_train)
+                    return
+            smart_iterator.set_postfix_str(", ".join([f"{np.round(mlps[x][0][-1] * 100, 2)}%" for x in list(mlps.keys())]))
+
+        show_and_save_graph(fig_path, figure_title, mlps, show_train)
+
+
+def show_and_save_graph(fig_path, figure_title, mlps, show_train):
+    fig, axis = plt.subplots(1, 2)
+    fig.suptitle(figure_title)
+    plt.subplots_adjust(top=0.73)
+    fig.set_size_inches(11, 6)
+    for j, mlp in enumerate(mlps.keys()):
+        print(mlp)
+        plt.sca(axis[0])
+        plt.plot(mlps[mlp][0], label=str(mlp), c=colors[j])
+        if show_train:
+            plt.plot(mlps[mlp][1], "--", c=colors[j])
+        plt.sca(axis[1])
+        plt.plot(mlps[mlp][2], label=str(mlp), c=colors[j])
+        if show_train:
+            plt.plot(mlps[mlp][3], "--", c=colors[j])
+    plt.sca(axis[0])
+    plt.title("accuracy")
+    plt.ylim(0, 1)
+    plt.xlabel("iterations")
+    plt.ylabel("accuracy")
+    plt.legend()
+    plt.sca(axis[1])
+    plt.title("loss")
+    plt.xlabel("iterations")
+    plt.ylabel("loss")
+    plt.legend()
+    plt.savefig(fig_path)
+    plt.show()
+
+
+def get_title_and_set_labels(mlps):
     figure_title = ""
     if len(list(mlps.keys())) == 1:
         for param in list(mlps.keys())[0].show_dict:
@@ -154,52 +209,7 @@ def run_simulation(mlps, iterations, show_train=False):
         val = list(mlps.keys())[0].show_dict[param]
         if val == "":
             figure_title += param + list(mlps.keys())[0].standard_dict[param] + "\n"
-
-    fig_path = f'plots/fig_{datetime.datetime.now()}.png'
-    for current, i in enumerate(iterations):
-        smart_iterator = tqdm(range(i), colour='BLUE')
-        smart_iterator.set_postfix_str(f'{current}/{len(iterations)}')
-        for _ in smart_iterator:
-            for mlp in mlps.keys():
-                mlp.train_one_epoch()
-                loss_train, prediction_train = mlp.get_predictions(mlp.train_X, mlp.d_train)
-                loss_test, prediction_test = mlp.get_predictions(mlp.test_X, mlp.d_test)
-                mlps[mlp][0].append(prediction_test)
-                mlps[mlp][1].append(prediction_train)
-                mlps[mlp][2].append(loss_test)
-                mlps[mlp][3].append(loss_train)
-            smart_iterator.set_postfix_str(", ".join([f"{np.round(mlps[x][0][-1] * 100, 2)}%" for x in list(mlps.keys())]))
-
-        fig, axis = plt.subplots(1, 2)
-        fig.suptitle(figure_title)
-        plt.subplots_adjust(top=0.73)
-        fig.set_size_inches(11, 6)
-        for j, mlp in enumerate(mlps.keys()):
-            print(mlp)
-            plt.sca(axis[0])
-            plt.plot(mlps[mlp][0], label=str(mlp), c=colors[j])
-            if show_train:
-                plt.plot(mlps[mlp][1], "--", c=colors[j])
-            plt.sca(axis[1])
-            plt.plot(mlps[mlp][2], label=str(mlp), c=colors[j])
-            if show_train:
-                plt.plot(mlps[mlp][3], "--", c=colors[j])
-
-        plt.sca(axis[0])
-        plt.title("accuracy")
-        plt.ylim(0, 1)
-        plt.xlabel("iterations")
-        plt.ylabel("accuracy")
-        plt.legend()
-
-        plt.sca(axis[1])
-        plt.title("loss")
-        plt.xlabel("iterations")
-        plt.ylabel("loss")
-        plt.legend()
-
-        plt.savefig(fig_path)
-        plt.show()
+    return figure_title
 
 
 def main():
