@@ -170,8 +170,8 @@ def run_simulation(mlps, iterations, show_train=False):
                 mlps[mlp][3].append(loss_train)
             smart_iterator.set_postfix_str(", ".join([f"{np.round(mlps[x][0][-1] * 100, 2)}%" for x in list(mlps.keys())]))
 
-        plt.title(figure_title)
         fig, axis = plt.subplots(1, 2)
+        fig.suptitle(figure_title)
         plt.subplots_adjust(top=0.73)
         fig.set_size_inches(11, 6)
         for j, mlp in enumerate(mlps.keys()):
@@ -186,14 +186,14 @@ def run_simulation(mlps, iterations, show_train=False):
                 plt.plot(mlps[mlp][3], "--", c=colors[j])
 
         plt.sca(axis[0])
-        plt.title("accuracy\n" + figure_title)
+        plt.title("accuracy")
         plt.ylim(0, 1)
         plt.xlabel("iterations")
         plt.ylabel("accuracy")
         plt.legend()
 
         plt.sca(axis[1])
-        plt.title("loss\n" + figure_title)
+        plt.title("loss")
         plt.xlabel("iterations")
         plt.ylabel("loss")
         plt.legend()

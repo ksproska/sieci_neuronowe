@@ -18,7 +18,8 @@ def tanh_derivative(x):
 
 
 def relu(x):
-    return np.vectorize(lambda v: max(v, 0))(x)
+    return np.vectorize(lambda v: max(v, 0.0))(x)
+
 
 
 @np.vectorize
