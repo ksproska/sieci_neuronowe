@@ -25,7 +25,7 @@ def get_prepared_data():
 def get_layers_info(model_layers):
     output = "n\ttype\tfilters\tkernel_size\tactivation\tpool_size\tstrides\n"
     for i, l in enumerate(model_layers[1:-2]):
-        if type(l) == layers.MaxPooling2D:
+        if type(l) == layers.MaxPooling2D or type(l) == layers.AveragePooling2D:
             output += "".join([str(i), "\t", l.__class__.__name__, "\t\t\t\t", str(l.pool_size), "\t", str(l.strides)])
         if type(l) == layers.Conv2D:
             output += "".join([str(i), "\t", l.__class__.__name__, "\t", str(l.filters), "\t", str(l.kernel_size), "\t", l.activation.__name__, "\t\t"])
