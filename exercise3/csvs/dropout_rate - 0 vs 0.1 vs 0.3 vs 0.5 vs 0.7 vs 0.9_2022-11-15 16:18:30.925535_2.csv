@@ -1,7 +1,0 @@
-n,type,filters,kernel_size,activation,pool_size,strides,units
-,,,,,,,
-1,Conv2D,32,"(3, 3)",relu,,,
-2,MaxPooling2D,,,,"(2, 2)","(1, 1)",
-,,,,,,,
-,,,,,,,
-5,Dense,,,,,,10
