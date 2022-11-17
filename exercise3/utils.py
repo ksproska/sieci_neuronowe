@@ -27,10 +27,12 @@ def get_layers_info(model_layers):
     for i, l in enumerate(model_layers):
         if type(l) == layers.MaxPooling2D or type(l) == layers.AveragePooling2D:
             output += "".join([str(i), "\t", l.__class__.__name__, "\t\t\t\t", str(l.pool_size), "\t", str(l.strides), "\t"])
-        if type(l) == layers.Conv2D:
+        elif type(l) == layers.Conv2D:
             output += "".join([str(i), "\t", l.__class__.__name__, "\t", str(l.filters), "\t", str(l.kernel_size), "\t", l.activation.__name__, "\t\t\t"])
-        if type(l) == layers.Dense:
+        elif type(l) == layers.Dense:
             output += "".join([str(i), "\t", l.__class__.__name__, "\t\t\t\t\t\t", str(l.units)])
+        else:
+            output += "".join([str(i), "\t", l.__class__.__name__, "\t\t\t\t\t\t"])
         output += "\n"
     output = output[:-1]
 

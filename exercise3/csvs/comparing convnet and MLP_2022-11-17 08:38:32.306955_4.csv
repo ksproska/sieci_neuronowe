@@ -1,0 +1,4 @@
+n,type,filters,kernel_size,activation,pool_size,strides,units
+0,Flatten,,,,,,
+1,Dense,,,,,,150
+2,Dense,,,,,,10
