@@ -1,4 +1,0 @@
-n,type,filters,kernel_size,activation,pool_size,strides,units
-,,,,,,,
-1,Dense,,,,,,5
-2,Dense,,,,,,10

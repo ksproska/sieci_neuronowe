@@ -1,8 +1,0 @@
-n,type,filters,kernel_size,activation,pool_size,strides,units
-0,KerasTensor,,,,,,
-1,Conv2D,8,"(3, 3)",relu,,,
-2,MaxPooling2D,,,,"(2, 2)","(1, 1)",
-3,Conv2D,16,"(3, 3)",relu,,,
-4,MaxPooling2D,,,,"(2, 2)","(1, 1)",
-5,Flatten,,,,,,
-6,Dense,,,,,,10

@@ -1,5 +1,0 @@
-n,type,filters,kernel_size,activation,pool_size,strides
-0,Conv2D,32,"(3, 3)",relu,,
-1,MaxPooling2D,,,,"(4, 4)","(1, 1)"
-2,Conv2D,64,"(3, 3)",relu,,
-3,MaxPooling2D,,,,"(4, 4)","(1, 1)"
